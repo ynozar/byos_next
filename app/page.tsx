@@ -1,6 +1,32 @@
 import Image from "next/image";
+import { networkInterfaces } from "os";
+
+const getLocalIPAddresses = () => {
+  const nets = networkInterfaces();
+  const results: { [key: string]: string[] } = Object.create(null);
+
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name] || []) {
+      const familyV4Value = typeof net.family === 'string' ? 'IPv4' : 4;
+      if (net.family === familyV4Value && !net.internal) {
+        if (!results[name]) {
+          results[name] = [];
+        }
+        results[name].push(net.address);
+      }
+    }
+  }
+  
+  // Return the first found non-internal IPv4 address
+  return results[Object.keys(results)[0]]?.[0] || 'No IP found';
+};
+
 
 export default function Home() {
+  const ipAddress = getLocalIPAddresses();
+
+  const baseUrl = process.env.NODE_ENV === 'production' ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : `http://${ipAddress}:3000`;
+
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
