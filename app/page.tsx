@@ -1,5 +1,8 @@
-import Image from "next/image";
 import { networkInterfaces } from "os";
+import { Suspense } from "react";
+import { createClient } from "@/lib/supabase/server";
+import { DashboardContent } from "@/components/dashboard/dashboard-content";
+import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton";
 
 const getLocalIPAddresses = () => {
   const nets = networkInterfaces();
@@ -16,112 +19,65 @@ const getLocalIPAddresses = () => {
       }
     }
   }
-  
+
   // Return the first found non-internal IPv4 address
   return results[Object.keys(results)[0]]?.[0] || 'No IP found';
 };
 
+// Create Promise-based data fetching functions
+const fetchDevices = async () => {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('devices')
+    .select('*');
+  
+  if (error) {
+    console.error('Error fetching devices:', error);
+    throw new Error('Failed to fetch devices');
+  }
+  
+  return data;
+};
 
-export default function Home() {
-  const ipAddress = getLocalIPAddresses();
+const fetchSystemLogs = async () => {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('system_logs')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(50);
+  
+  if (error) {
+    console.error('Error fetching system logs:', error);
+    throw new Error('Failed to fetch system logs');
+  }
+  
+  return data;
+};
 
-  const baseUrl = process.env.NODE_ENV === 'production' ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : `http://${ipAddress}:3000`;
+export default function Dashboard() {
+  // Create promises that will be passed to client components
+  const devicesPromise = fetchDevices();
+  const systemLogsPromise = fetchSystemLogs();
+  
+  const hostUrl = process.env.NODE_ENV === 'production' 
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` 
+    : `http://${getLocalIPAddresses()}:${process.env.PORT || 3000}`;
 
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
+    <div className="max-w-6xl mx-auto p-4 md:p-6">
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold">System Overview</h2>
+      </div>
+      
+      <Suspense fallback={<DashboardSkeleton />}>
+        <DashboardContent 
+          devicesPromise={devicesPromise} 
+          systemLogsPromise={systemLogsPromise} 
+          hostUrl={hostUrl} 
         />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </Suspense>
     </div>
   );
 }
+
