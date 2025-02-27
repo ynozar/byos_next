@@ -14,7 +14,7 @@ To get started with BYOS Next.js for TRMNL, follow one of the two methods below:
 
 ### Method 1: Deploy to Vercel
 
-1. Click the link to [deploy to Vercel](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) using this template.
+1. [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fghcpuman902%2Fbyos-nextjs&project-name=byos-nextjs&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22supabase%22%2C%22productSlug%22%3A%22supabase%22%7D%5D) using this template.
 2. Follow the instructions to connect a Supabase database to your application.
 3. Once deployed, navigate to your app to initialize the database and obtain your server base URL.
 4. Long press (10s) the button at the back TRMNL device to reset it.
@@ -199,3 +199,9 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 - ![Example 1](#) 
 - ![Example 2](#) 
 - ![Example 3](#) 
+
+
+
+
+
+
