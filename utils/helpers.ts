@@ -1,4 +1,5 @@
 import type { Device, Log } from "@/lib/supabase/types"
+import crypto from "crypto"
 
 // Format date to a readable format
 export function formatDate(dateString: string | null): string {
@@ -31,18 +32,6 @@ export function getDeviceStatus(device: Device): "online" | "offline" {
   return now < nextExpectedUpdate ? "online" : "offline"
 }
 
-// Determine device type based on name or other properties
-export function getDeviceType(device: Device): string {
-  const name = device.name.toLowerCase()
-
-  if (name.includes("tablet")) return "tablet"
-  if (name.includes("kiosk") || name.includes("display")) return "monitor"
-  if (name.includes("phone")) return "smartphone"
-  if (name.includes("laptop")) return "laptop"
-
-  return "monitor" // Default type
-}
-
 // Parse log data to determine log type
 export function getLogType(log: Log): "error" | "warning" | "info" {
   const logData = log.log_data.toLowerCase()
@@ -66,4 +55,38 @@ export function debounce<T extends (...args: any[]) => any>(func: T, wait: numbe
     if (timeout) clearTimeout(timeout)
     timeout = setTimeout(later, wait)
   }
+}
+
+// Add validation functions for API key and friendly ID
+export const isValidApiKey = (key: string): boolean => {
+    const regex = /^[a-zA-Z0-9]{20,60}$/; // Alphanumeric, 20-60 characters
+    return regex.test(key);
+}
+
+export const isValidFriendlyId = (id: string): boolean => {
+    const regex = /^[A-Z0-9]{6}$/; // 6 uppercase alphanumeric characters
+    return regex.test(id);
+}
+
+
+// Add the new hashing and generation functions with types
+export function hashString(input: string, salt: string, length: number, charset: string): string {
+  const hash = crypto.createHmac("sha256", salt).update(input).digest("hex");
+  let result = "";
+  for (let i = 0; i < length; i++) {
+      result += charset[parseInt(hash.slice(i * 2, i * 2 + 2), 16) % charset.length];
+  }
+  return result;
+}
+
+export function generateApiKey(macAddress: string, salt: string = "API_KEY_SALT"): string {
+  macAddress = macAddress.toUpperCase().replace(/[:-]/g, ""); // Normalize MAC
+  const characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  return hashString(macAddress, salt, 22, characters);
+}
+
+export function generateFriendlyId(macAddress: string, salt: string = "FRIENDLY_ID_SALT"): string {
+  macAddress = macAddress.toUpperCase().replace(/[:-]/g, ""); // Normalize MAC
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  return hashString(macAddress, salt, 6, characters);
 }

@@ -1,18 +1,28 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono as FontMono, Geist as FontSans } from "next/font/google"
 import "./globals.css";
 import { createClient } from "@/lib/supabase/server"
 import React, { Suspense } from "react";
 import MainLayout from "@/components/main-layout";
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+import { Toaster } from "@/components/ui/sonner";
+import { cn } from "@/lib/utils";
+import { ThemeProvider } from "next-themes";
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+
+const fontSans = FontSans({
   subsets: ["latin"],
-});
+  variable: "--font-sans",
+})
+
+const fontMono = FontMono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+})
+
+const META_THEME_COLORS = {
+  light: "#ffffff",
+  dark: "#09090b",
+}
 
 export const metadata: Metadata = {
   title: "trmnl-byos-nextjs",
@@ -32,17 +42,44 @@ export default async function RootLayout({
 
 
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <Suspense fallback={<div>Loading...</div>}>
-          {error ? (
-            <div>Error loading devices</div>
-          ) : (
-            <MainLayout devices={devices}>
-              {children}
-            </MainLayout>
-          )}
-        </Suspense>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                if (localStorage.theme === 'dark' || ((!('theme' in localStorage) || localStorage.theme === 'system') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                  document.querySelector('meta[name="theme-color"]').setAttribute('content', '${META_THEME_COLORS.dark}')
+                }
+              } catch (_) {}
+            `,
+          }}
+        />
+      </head>
+      <body
+        className={cn(
+          "bg-background overscroll-none font-sans antialiased",
+          fontSans.variable,
+          fontMono.variable
+        )}
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Suspense fallback={<div>Loading...</div>}>
+            {error ? (
+              <div>Error loading devices</div>
+            ) : (
+              <MainLayout devices={devices}>
+                {children}
+              </MainLayout>
+            )}
+          </Suspense>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

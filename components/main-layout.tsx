@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { StatusIndicator } from "@/components/ui/status-indicator"
 import type { Device } from "@/lib/supabase/types"
-import { getDeviceStatus, getDeviceType } from "@/utils/helpers"
+import { getDeviceStatus } from "@/utils/helpers"
 import Link from "next/link"
 
 interface MainLayoutProps {
@@ -73,7 +73,6 @@ export default function MainLayout({ children, devices }: MainLayoutProps) {
   const enhancedDevices = devices.map((device) => ({
     ...device,
     status: getDeviceStatus(device),
-    type: getDeviceType(device),
   }))
 
   return (

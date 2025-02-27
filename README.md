@@ -1,204 +1,223 @@
-# BYOS Next.js for TRMNL
+# BYOS Next.js for TRMNL 🖥️
+
+[![License](https://img.shields.io/github/license/usetrmnl/byos-nextjs)](https://github.com/usetrmnl/byos-nextjs/blob/main/LICENSE)
+[![Vercel Deployment](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fghcpuman902%2Fbyos-nextjs)
+
+## 📖 Table of Contents
+- [Overview](#-overview)
+- [Features](#-features)
+- [Quick Start](#-quick-start)
+- [How It Works](#-how-does-it-work)
+- [Installation](#-installation)
+- [Usage](#-usage)
+- [Troubleshooting](#-troubleshooting)
+- [Contributing](#-contributing)
+- [Community](#-community)
 
 ## 🚀 Overview
-**BYOS (Build Your Own Server Next.js)** is a community-maintained library for the TRMNL deivce https://usetrmnl.com/.
 
-It's designed to be api morphic to the offical BYOS solutions like:
-https://github.com/usetrmnl/byos_sinatra
-https://github.com/usetrmnl/byos_django/
-https://github.com/usetrmnl/byos_phoenix
+**BYOS (Build Your Own Server)** is a community-maintained library for the TRMNL device, designed to provide a flexible and customizable server solution. This Next.js implementation offers a robust, modern approach to device management and display generation.
 
-## Quick Start
+## ✨ Features
 
-To get started with BYOS Next.js for TRMNL, follow one of the two methods below:
+- 🔧 Customizable device management
+- 🖼️ Dynamic screen generation
+- 🚀 Easy deployment to Vercel
+- 📊 Comprehensive logging system
+- 🔒 Secure API key management
+- 💻 Modern tech stack (Next.js 15, React 19, Tailwind CSS v4)
+- ⚠️ Using a canary version of Shadcn for Tailwind v4 support; be cautious with AI-generated code.
 
-### Method 1: Deploy to Vercel
+## 🏁 Quick Start
 
-1. [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fghcpuman902%2Fbyos-nextjs&project-name=byos-nextjs&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22supabase%22%2C%22productSlug%22%3A%22supabase%22%7D%5D) using this template.
-2. Follow the instructions to connect a Supabase database to your application.
-3. Once deployed, navigate to your app to initialize the database and obtain your server base URL.
-4. Long press (10s) the button at the back TRMNL device to reset it.
-5. Connect to the TRMNL Wi-Fi network and use the captive portal to set up Wi-Fi. Change the server base URL to the deployed app in the format `https://xxxxxx.vercel.app` (omit the trailing slash).
-6. You should now see a stream of logs on the home page of your app, and the device will display the current time and date.
+### Option 1: Deploy to Vercel
 
-### Method 2: Local Setup
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fghcpuman902%2Fbyos-nextjs&project-name=byos-nextjs&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22supabase%22%2C%22productSlug%22%3A%22supabase%22%7D%5D)
 
-1. Open your terminal and run the following commands to create a new directory and navigate into it:
-   ```bash
-   mkdir byos_nextjs && cd byos_nextjs
-   ```
-2. Clone the repository into the current directory:
-   ```bash
-   git clone https://github.com/ghcpuman902/byos-nextjs .  # Clones without creating an extra folder
-   ```
-3. Install the dependencies and start the development server:
-   ```bash
-   pnpm install && pnpm run dev
-   ```
-4. Open your browser and go to `http://localhost:3000` to initialize the database and get your server base URL.
-5. Long press (10s) the button at the back TRMNL device to reset it.
-6. Connect to the TRMNL Wi-Fi network and use the captive portal to set up Wi-Fi. Change the server base URL to the IP address of your Next.js app in the format `http://192.168.xxx.xxx:3000` (omit the trailing slash).
-7. You should now see a stream of logs on the home page of your app, and the device will display the current time and date.
+1. Click the Vercel deployment button
+2. Link a free Supabase database
+3. Follow the deployment instructions
+4. Obtain your server base URL
 
+### Option 2: Local Development Setup
 
-## How does it work?
-A new, not setup TRMNL device go through this cycle:
+#### Prerequisites
+- Node.js (v20 or later)
+- pnpm or npm or yarn
+- Git
 
-### 1. Device Setup
-When a device sends its MAC address in the request headers, the backend checks if the device is already registered. If not, it creates a new device entry in the database. This return the api key and friendly id the device will use to identify itself to the backend.
+#### Installation Steps
+```bash
+# Clone the repository
+git clone https://github.com/ghcpuman902/byos-nextjs
+cd byos-nextjs
+
+# Install dependencies
+pnpm install # or npm install or yarn install
+
+# Start development server
+pnpm run dev # or npm run dev or yarn run dev
+```
+
+### Important Note
+When dealing with AI-generated code, be aware that Tailwind v4 has some slightly different syntax compared to previous versions.
+when adding shadcn new componenet, use the following command:
+```bash
+pnpm dlx shadcn@canary add [component1] [component2] [component3]
+```
+
+## 🔍 How Does It Work?
+
+### 1. Device Setup Workflow
+The device initialization process is a critical part of the BYOS architecture:
+
+#### Request Flow
+1. **Initial Contact**: 
+   - Device sends MAC address in request headers
+   - Endpoint: `/api/setup`
+   - Headers include device MAC address
 
 ```bash
-# equivilant deivce request in curl
 curl -X GET http://[YOUR BASE URL]/api/setup \
 -H "Content-Type: application/json" \
--H "ID: 12:34:56:78:9A:BC" # MAC address of the device
+-H "ID: 12:34:56:78:9A:BC"
 ```
-```bash
-# Expected response from the server
+
+#### Backend Processing
+- Checks if device is already registered in Supabase
+- Generates unique API key if not existing
+- Creates device entry with:
+  - MAC address
+  - Generated API key
+  - Friendly device ID
+
+#### Response Structure
+```json
 {
-   "status":200,
-   "api_key":"someRandomApiKey",
-   "friendly_id":"ABC123",
-   "image_url":null,
-   "filename":null,
-   "message":"Device ABC123 added to BYOS!"
+   "status": 200,
+   "api_key": "uniqueApiKeyGenerated",
+   "friendly_id": "DEVICE_ABC123",
+   "message": "Device successfully registered"
 }
 ```
 
-### 2. Display Management
-The device retrieves the url of the latest screen for a device based on its API key and MAC address.
+### 2. Display Management Architecture
 
+#### Key Components
+- **Endpoint**: `/api/display`
+- **Authentication**: 
+  - MAC address in headers
+  - API key for access token
+- **Caching Strategy**: 
+  - 60-second revalidation window
+  - Pre-rendering of images
+  - Minimal latency response
+
+#### Request Example
 ```bash
-# equivilant deivce request in curl
 curl -X GET http://[YOUR BASE URL]/api/display \
 -H "Content-Type: application/json" \
--H "ID: 12:34:56:78:9A:BC" \ # MAC address of the device
--H "Access-Token: someRandomApiKey" # API key of the device
+-H "ID: 12:34:56:78:9A:BC" \
+-H "Access-Token: uniqueApiKey"
 ```
-```bash
-# Expected response from the server 
+
+#### Response Specification
+```json
 {
-   "status":0,
-   "image_url":"https://your-base-url/api/bitmap/ABC123_MTc0MDUxODExMzM3Mg==.bmp", # friendly_id_timestamp.bmp, timeStamp in Buffer.from(Date.now().toString()).toString('base64url') format
-   "filename":"ABC123_MTc0MDUxODExMzM3Mg==.bmp",
-   "refresh_rate":180, # when to fetch next screen
-   "reset_firmware":false,
-   "update_firmware":false,
-   "firmware_url":null,
-   "special_function":"restart_playlist"}% 
-```
-side note: the device may request the url using `/api/display/` instead of `/api/display`, which will cause nextjs to return a 308 redirect, causing a non-200 http code that the device will not accept.
-we sovled this issue by setting the `trailingSlash: false` and `skipTrailingSlashRedirect: true` in the `next.config.js` file.
-
-### 3. Screen Generation
-The device now will fetch the given image url and display it on the screen.
-It has a strict format required, which is the bitmap has to be fixed length of 800x480px with coorespondign binary data.
-It also has a short timeout, so we leveraged nextjs's caching mechanism (revalidate = 60s) to cache the image and serve it to the device.
-When device ask for the url, we pre hit the url so it is rendered and ready to serve when the device request it.
-
-Note this is different from the offical BYOS solution, which is to generate the image first and save to a database. Our approach allows fresher data, but by default it doesnt not keep a record of the generated screens.
-
-### 4. Logging
-Devices can send log messages to the backend, which are stored in the database for monitoring and debugging purposes.
-By default it doesnt log anthing, it's only error that get logged to your server.
-This nextjs app also keeps its own systemlogs to the superbase to help you debug any issues.
-```bash
-# equivilant deivce request in curl
-curl -X GET http://[YOUR BASE URL]/api/log \
--H "Content-Type: application/json" \
--H "Access-Token: someRandomApiKey" # API key of the device
+   "status": 0,
+   "image_url": "https://your-base-url/api/bitmap/DEVICE_ID_TIMESTAMP.bmp",
+   "filename": "DEVICE_ID_TIMESTAMP.bmp",
+   "refresh_rate": 180,
+   "reset_firmware": false,
+   "update_firmware": false
+}
 ```
 
+### 3. Screen Generation Mechanics
 
+#### Technical Constraints
+- **Image Specifications**:
+  - Fixed dimensions: 800x480 pixels
+  - Bitmap (.bmp) format
+  - Strict binary data requirements
+- **Rendering Strategy**:
+  - Uses Satori for dynamic image generation
+  - Leverages Next.js edge caching
+  - Pre-render mechanism to reduce device wait time
 
-This architecture allows for seamless interaction between the TRMNL devices and the web application, enabling real-time updates and management.
+### 4. Logging Implementation
 
-## 🌟 Why Next.js?
-- **Customization at Your Fingertips**: Built on React, Next.js allows for extensive customization using modern CSS frameworks like Tailwind CSS.
-- **Effortless Deployment**: Deploy your application with a single click to Vercel.
-- **Lightweight Performance**: Generate images from HTML without the overhead of heavy runtimes.
-- **Satori Integration**: Utilize Satori for generating dynamic images.
-- **Beautiful Typography**: Stunning font support for crisp rendering.
-- **Rapid Development**: Quick iteration and feedback with rendered components.
-- **Caching Benefits**: Built-in caching mechanisms enhance performance.
+#### Logging Approach
+- **Storage**: Supabase database
+- **Capture Scope**:
+  - System-level logs
+  - Device interaction logs
+  - Error tracking
+- **Default Behavior**: 
+  - Minimal logging
+  - Error-only capture
+  - Optional comprehensive logging
 
-This example uses Next.js 15, React 19, Tailwind CSS v4, and ShadCN for a modern development experience.
-
-## 📦 Features
-- Community-driven development and maintenance.
-- Easy setup and configuration for local and cloud environments.
-- Support for image generation and display content management.
-- Comprehensive API for device management and logging.
-
-## 📖 Getting Started
-
-### Prerequisites
-- **Node.js** (v14 or later)
-- **pnpm** (install via npm: `npm install -g pnpm`)
-- **Zsh** (recommended for a better shell experience)
-
-### Installation
-Clone the repository and install dependencies:
-
-```bash
-git clone https://github.com/usetrmnl/byos_nextjs
-cd byos_nextjs
-pnpm install
+#### Log Entry Structure
+```typescript
+interface DeviceLog {
+  timestamp: Date;
+  device_id: string;
+  mac_address: string;
+  log_level: 'INFO' | 'WARNING' | 'ERROR';
+  message: string;
+}
 ```
 
-### Running the Development Server
-Start the development server:
+### 5. Architectural Considerations
 
-```bash
-pnpm run dev
+#### Redirect Handling
+- Disabled trailing slash redirects
+- Configured in `next.config.js`:
+```javascript
+module.exports = {
+  trailingSlash: false,
+  skipTrailingSlashRedirect: true
+}
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to see your application in action!
+#### Performance Optimizations
+- Edge caching for bitmap generation
+- Minimal payload size
+- Quick response time prioritized
+- Stateless API design
 
-### Editing the Application
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you make changes.
+## 🤝 Contributing
 
-## 🏗️ Architecture Structure
-Here's a brief overview of the project structure:
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details on:
+- Reporting bugs
+- Suggesting features
+- Submitting pull requests
 
-```bash
-byos_nextjs/
-├── app/                  # Main application directory
-│   ├── components/       # Reusable React components
-│   ├── pages/            # Next.js pages
-│   ├── styles/           # Global styles and Tailwind CSS configuration
-│   └── utils/            # Utility functions and helpers
-├── public/               # Static assets (images, fonts, etc.)
-├── api/                  # API routes for device management
-├── tests/                # Unit and integration tests
-├── .env                  # Environment variables
-├── .gitignore            # Git ignore file
-├── package.json          # Project metadata and dependencies
-└── README.md             # Project documentation
-```
+### Ways to Contribute
+- Report issues on GitHub
+- Submit pull requests
+- Improve documentation
+- Share use cases and feedback
+
+## 🌐 Community
+
+- 📢 [GitHub Discussions](https://github.com/usetrmnl/byos_nextjs/discussions)
+- 🐦 [Twitter @usetrmnl](https://twitter.com/usetrmnl)
+- 💬 Join our community channels
 
 ## 📚 Learn More
 - [Next.js Documentation](https://nextjs.org/docs)
-- [Learn Next.js](https://nextjs.org/learn)
+- [Supabase Documentation](https://supabase.com/docs)
+- [TRMNL Device Website](https://usetrmnl.com)
 
-## 🌐 Community & Contributions
-We welcome contributions from everyone! Check out our [contributing guidelines](CONTRIBUTING.md) to get involved.
+## 📄 License
 
-- Join our discussions on [GitHub Discussions](https://github.com/usetrmnl/byos_nextjs/discussions).
-- Follow us on [Twitter](https://twitter.com/usetrmnl) for updates.
+This project is open-source and available under the MIT License.
 
-## 🚀 Deploy on Vercel
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme).
+---
 
-## 🔗 Quick Links
-- [Button 1: Example Action](#)
-- [Button 2: Another Action](#)
-- [Button 3: Yet Another Action](#)
-
-## 📸 Examples
-- ![Example 1](#) 
-- ![Example 2](#) 
-- ![Example 3](#) 
+**Happy Coding! 🚀**
 
 
 
