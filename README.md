@@ -68,14 +68,18 @@ pnpm dlx shadcn@canary add [component1] [component2] [component3]
 
 ## 🔍 How Does It Work?
 
-### 1. Device Setup Workflow
-The device initialization process is a critical part of the BYOS architecture:
+### 1. Device Interaction Endpoints
 
-#### Request Flow
-1. **Initial Contact**: 
-   - Device sends MAC address in request headers
-   - Endpoint: `/api/setup`
-   - Headers include device MAC address
+The BYOS architecture provides three main endpoints that devices interact with:
+
+#### Setup Endpoint (`/api/setup`)
+- **Purpose**: Device registration and API key generation
+- **When Used**: Only called when a device is reset or does not have an API key stored
+- **Request Flow**:
+  - Device sends MAC address in request headers
+  - Server checks if device exists in database
+  - If new, generates unique API key and friendly device ID
+  - Returns API key to device for future authentication
 
 ```bash
 curl -X GET http://[YOUR BASE URL]/api/setup \
@@ -83,15 +87,7 @@ curl -X GET http://[YOUR BASE URL]/api/setup \
 -H "ID: 12:34:56:78:9A:BC"
 ```
 
-#### Backend Processing
-- Checks if device is already registered in Supabase
-- Generates unique API key if not existing
-- Creates device entry with:
-  - MAC address
-  - Generated API key
-  - Friendly device ID
-
-#### Response Structure
+**Response Example**:
 ```json
 {
    "status": 200,
@@ -101,19 +97,14 @@ curl -X GET http://[YOUR BASE URL]/api/setup \
 }
 ```
 
-### 2. Display Management Architecture
-
-#### Key Components
-- **Endpoint**: `/api/display`
-- **Authentication**: 
-  - MAC address in headers
-  - API key for access token
-- **Caching Strategy**: 
-  - 60-second revalidation window
-  - Pre-rendering of images
-  - Minimal latency response
-
-#### Request Example
+#### Display Endpoint (`/api/display`)
+- **Purpose**: Primary endpoint for screen content delivery
+- **When Used**: Called repeatedly by the device after setup to get new screens
+- **Key Functions**:
+  1. Provides the URL for the next screen to display
+  2. Specifies how long the device should sleep before requesting again
+  3. Can optionally signal firmware reset/update requirements
+  
 ```bash
 curl -X GET http://[YOUR BASE URL]/api/display \
 -H "Content-Type: application/json" \
@@ -121,7 +112,7 @@ curl -X GET http://[YOUR BASE URL]/api/display \
 -H "Access-Token: uniqueApiKey"
 ```
 
-#### Response Specification
+**Response Example**:
 ```json
 {
    "status": 0,
@@ -133,59 +124,62 @@ curl -X GET http://[YOUR BASE URL]/api/display \
 }
 ```
 
-### 3. Screen Generation Mechanics
+> **Note**: While the official TRMNL implementation also supports configuring button functionality, this implementation does not currently handle those features.
 
-#### Technical Constraints
-- **Image Specifications**:
-  - Fixed dimensions: 800x480 pixels
-  - Bitmap (.bmp) format
-  - Strict binary data requirements
-- **Rendering Strategy**:
-  - Uses Satori for dynamic image generation
-  - Leverages Next.js edge caching
-  - Pre-render mechanism to reduce device wait time
+#### Log Endpoint (`/api/log`)
+- **Purpose**: Error and issue reporting
+- **When Used**: Only called when errors or issues occur on the device
+- **Behavior**: Logs are stored in the Supabase database for troubleshooting
 
-### 4. Logging Implementation
+### 2. Screen Generation Approach
 
-#### Logging Approach
-- **Storage**: Supabase database
-- **Capture Scope**:
-  - System-level logs
-  - Device interaction logs
-  - Error tracking
-- **Default Behavior**: 
-  - Minimal logging
-  - Error-only capture
-  - Optional comprehensive logging
+Unlike the official Ruby/Python implementations which pre-generate screens, this Next.js implementation:
 
-#### Log Entry Structure
-```typescript
-interface DeviceLog {
-  timestamp: Date;
-  device_id: string;
-  mac_address: string;
-  log_level: 'INFO' | 'WARNING' | 'ERROR';
-  message: string;
-}
-```
+- **Generates screens on-demand**: When a device requests a display update
+- **Leverages Next.js caching**: Uses built-in caching mechanisms for performance
+- **Dynamic BMP generation**: The bitmap URL is not a static file but a dynamic API endpoint
+- **Efficient revalidation**: 
+  - First request may take longer to generate the screen
+  - Subsequent requests are served from cache while revalidating in the background
+  - This approach provides both speed and fresh content
 
-### 5. Architectural Considerations
+#### Technical Specifications
+- **Image Format**: 800x480 pixel 1-bit bitmap (.bmp)
+- **Rendering**: Uses Satori for dynamic image generation
+Rendering pipeline:
+JSX component -> pre-satori wrapper -> satori (svg) -> vercel image response (png) -> jimp (bmp) -> fixed header to fit TRMNL display
 
-#### Redirect Handling
-- Disabled trailing slash redirects
-- Configured in `next.config.js`:
-```javascript
-module.exports = {
-  trailingSlash: false,
-  skipTrailingSlashRedirect: true
-}
-```
+- **Caching Strategy**: 60-second revalidation window
 
-#### Performance Optimizations
-- Edge caching for bitmap generation
-- Minimal payload size
-- Quick response time prioritized
-- Stateless API design
+### 3. Authentication Considerations
+
+**Important**: This implementation does not include a comprehensive authentication system.
+
+- **No user management**: Unlike some official implementations, there is no built-in user field in the database
+- **Basic device authentication**: Only verifies device MAC address and API key
+- **Production deployment recommendations**:
+  - Implement your own authentication layer (e.g., NextAuth, SupabaseAuth)
+  - Use middleware for request validation
+  - Update the database schema to include user management if needed
+  - Consider rate limiting and other security measures
+
+## 🧪 Examples
+
+The project includes an examples section that allows you to visualize and test components in both their direct rendering and bitmap (BMP) rendering forms. This is designed to help develop and test components for e-ink displays.
+
+### How Examples Work
+
+visit `[base url]/examples` to view the examples page.
+
+To set up your own screen example, you can use the following structure:
+
+1. Create your component folder in the `app/examples/screens` directory following any of the existing examples.
+2. Add your component and data fetching logic
+3. Add an entry to `app/examples/components.json`
+
+Each screen is defined in `app/examples/components.json` and can be accessed via its slug.
+
+This allows you to code and preview before pointing your device to any of the screens.
 
 ## 🤝 Contributing
 
