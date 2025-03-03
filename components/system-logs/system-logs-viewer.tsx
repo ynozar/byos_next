@@ -14,12 +14,33 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { fetchSystemLogs } from "@/app/actions/system-logs-actions"
 import type { SystemLog } from "@/lib/supabase/types"
-import { debounce, formatDate } from "@/utils/helpers"
-import { ScrollArea, ScrollBar } from "../ui/scroll-area"
+import { formatDate } from "@/utils/helpers"
+import { useSearchWithDebounce } from "@/hooks/useSearchWithDebounce"
 
 const ITEMS_PER_PAGE = 100
 
-export default function SystemLogsViewer() {
+// Define the type for the fetch function parameters
+export type SystemLogsFetchParams = {
+  page: number;
+  perPage: number;
+  search?: string;
+  level?: string;
+  source?: string;
+}
+
+// Define the type for the fetch function result
+export type SystemLogsFetchResult = {
+  logs: SystemLog[];
+  total: number;
+  uniqueSources: string[];
+}
+
+interface SystemLogsViewerProps {
+  customFetchFunction?: (params: SystemLogsFetchParams) => Promise<SystemLogsFetchResult>;
+  paramPrefix?: string;
+}
+
+export default function SystemLogsViewer({ customFetchFunction, paramPrefix = "" }: SystemLogsViewerProps) {
     const router = useRouter()
     const pathname = usePathname()
     const searchParams = useSearchParams()
@@ -27,10 +48,10 @@ export default function SystemLogsViewer() {
     const searchInputRef = useRef<HTMLInputElement>(null)
 
     // Get URL params with defaults
-    const page = Number(searchParams.get("page") || "1")
-    const searchQuery = searchParams.get("search") || ""
-    const levelFilter = searchParams.get("level") || "all"
-    const sourceFilter = searchParams.get("source") || "all"
+    const page = Number(searchParams.get(`${paramPrefix}page`) || "1")
+    const searchQuery = searchParams.get(`${paramPrefix}search`) || ""
+    const levelFilter = searchParams.get(`${paramPrefix}level`) || "all"
+    const sourceFilter = searchParams.get(`${paramPrefix}source`) || "all"
 
     // State
     const [logs, setLogs] = useState<SystemLog[]>([])
@@ -45,29 +66,29 @@ export default function SystemLogsViewer() {
         (params: Record<string, string | number | null>) => {
             const newSearchParams = new URLSearchParams(searchParams.toString())
 
+            // Add prefix to all parameters
             Object.entries(params).forEach(([key, value]) => {
+                const prefixedKey = `${paramPrefix}${key}`
+                
                 if (value === null) {
-                    newSearchParams.delete(key)
+                    newSearchParams.delete(prefixedKey)
                 } else {
-                    newSearchParams.set(key, String(value))
+                    newSearchParams.set(prefixedKey, String(value))
                 }
             })
 
             return newSearchParams.toString()
         },
-        [searchParams],
+        [searchParams, paramPrefix],
     )
 
-    // Debounced search function
-    const debouncedSearch = useCallback(
-        debounce((value: string) => {
-            const queryString = createQueryString({
-                search: value || null,
-                page: value !== searchQuery ? 1 : page, // Reset to page 1 on new search
-            })
-            router.push(`${pathname}?${queryString}`, { scroll: false })
-        }, 500),
-        [createQueryString, pathname, router, searchQuery, page],
+    // Use the custom hook for debounced search
+    const debouncedSearch = useSearchWithDebounce(
+        searchQuery,
+        page,
+        createQueryString,
+        pathname,
+        router
     )
 
     // Handle search input change
@@ -120,13 +141,18 @@ export default function SystemLogsViewer() {
         const loadLogs = async () => {
             setIsLoading(true)
             try {
-                const { logs, total, uniqueSources } = await fetchSystemLogs({
+                const fetchParams = {
                     page,
                     perPage: ITEMS_PER_PAGE,
                     search: searchQuery,
                     level: levelFilter !== "all" ? levelFilter : undefined,
                     source: sourceFilter !== "all" ? sourceFilter : undefined,
-                })
+                };
+
+                // Use the custom fetch function if provided, otherwise use the default
+                const { logs, total, uniqueSources } = customFetchFunction 
+                    ? await customFetchFunction(fetchParams)
+                    : await fetchSystemLogs(fetchParams);
 
                 setLogs(logs)
                 setTotalLogs(total)
@@ -142,7 +168,7 @@ export default function SystemLogsViewer() {
         }
 
         loadLogs()
-    }, [page, searchQuery, levelFilter, sourceFilter])
+    }, [page, searchQuery, levelFilter, sourceFilter, customFetchFunction])
 
     // Maintain scroll position
     useEffect(() => {
@@ -158,16 +184,6 @@ export default function SystemLogsViewer() {
 
     // Check if any filters are active
     const hasActiveFilters = searchQuery || levelFilter !== "all" || sourceFilter !== "all"
-
-    // Format metadata for display
-    const formatMetadata = (metadata: string) => {
-        try {
-            const parsed = JSON.parse(metadata)
-            return JSON.stringify(parsed, null, 2)
-        } catch {
-            return metadata
-        }
-    }
 
     return (
         <div ref={scrollRef} className="space-y-4">
@@ -264,7 +280,7 @@ export default function SystemLogsViewer() {
                                 <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Level</th>
                                 <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Source</th>
                                 <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Message</th>
-                                <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground w-[300px]">Metadata</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Metadata</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -284,7 +300,7 @@ export default function SystemLogsViewer() {
                                             <Skeleton className="h-4 w-full" />
                                         </td>
                                         <td className="px-4 py-3">
-                                            <Skeleton className="h-4 w-[300px]" />
+                                            <Skeleton className="h-4 w-[500px]" />
                                         </td>
                                     </tr>
                                 ))
@@ -334,7 +350,7 @@ export default function SystemLogsViewer() {
                                                     {log.metadata ? (
                                                         <div className="flex items-start gap-1 justify-between">
                                                             <div
-                                                                className={`font-mono text-xs w-[50vw] md:w-[50vw] lg:w-[600px]`}
+                                                                className={`font-mono text-xs w-[50vw] md:w-[50vw] lg:w-[500px]`}
                                                             >
                                                                 { expandedLogs[log.id] ? 
                                                                     <div className="pt-2 h-[200px] w-full overflow-auto">

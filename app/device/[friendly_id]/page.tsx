@@ -3,76 +3,27 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
-import { ChevronLeft, Laptop, RefreshCw, Save, Smartphone, Tablet, Monitor, X, Search } from "lucide-react"
+import { RefreshCw, Save, X, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import type { Device, Log } from "@/lib/supabase/types"
+import type { Device } from "@/lib/supabase/types"
 import { getDeviceStatus, formatDate } from "@/utils/helpers"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { fetchDeviceByFriendlyId, fetchDeviceLogs, updateDevice, refreshDeviceScreen } from "@/app/actions/device-actions"
+import { fetchDeviceByFriendlyId, updateDevice, refreshDeviceScreen } from "@/app/actions/device-actions"
 import { toast } from "sonner"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
-import { isValidApiKey, isValidFriendlyId, generateApiKey, generateFriendlyId } from "@/utils/helpers"
-
-// Extended Log type with type property
-interface ExtendedLog extends Log {
-    type?: string;
-}
-
-// Common IANA timezones grouped by region
-const timezones = [
-    // Europe
-    { value: "Europe/London", label: "London (GMT/BST)", region: "Europe" },
-    { value: "Europe/Paris", label: "Paris (CET/CEST)", region: "Europe" },
-    { value: "Europe/Berlin", label: "Berlin (CET/CEST)", region: "Europe" },
-    { value: "Europe/Madrid", label: "Madrid (CET/CEST)", region: "Europe" },
-    { value: "Europe/Rome", label: "Rome (CET/CEST)", region: "Europe" },
-    { value: "Europe/Amsterdam", label: "Amsterdam (CET/CEST)", region: "Europe" },
-    { value: "Europe/Athens", label: "Athens (EET/EEST)", region: "Europe" },
-    { value: "Europe/Moscow", label: "Moscow (MSK)", region: "Europe" },
-
-    // North America
-    { value: "America/New_York", label: "New York (EST/EDT)", region: "North America" },
-    { value: "America/Chicago", label: "Chicago (CST/CDT)", region: "North America" },
-    { value: "America/Denver", label: "Denver (MST/MDT)", region: "North America" },
-    { value: "America/Los_Angeles", label: "Los Angeles (PST/PDT)", region: "North America" },
-    { value: "America/Toronto", label: "Toronto (EST/EDT)", region: "North America" },
-    { value: "America/Vancouver", label: "Vancouver (PST/PDT)", region: "North America" },
-
-    // Asia
-    { value: "Asia/Tokyo", label: "Tokyo (JST)", region: "Asia" },
-    { value: "Asia/Shanghai", label: "Shanghai (CST)", region: "Asia" },
-    { value: "Asia/Singapore", label: "Singapore (SGT)", region: "Asia" },
-    { value: "Asia/Dubai", label: "Dubai (GST)", region: "Asia" },
-    { value: "Asia/Hong_Kong", label: "Hong Kong (HKT)", region: "Asia" },
-
-    // Australia & Pacific
-    { value: "Australia/Sydney", label: "Sydney (AEST/AEDT)", region: "Australia & Pacific" },
-    { value: "Australia/Melbourne", label: "Melbourne (AEST/AEDT)", region: "Australia & Pacific" },
-    { value: "Australia/Perth", label: "Perth (AWST)", region: "Australia & Pacific" },
-    { value: "Pacific/Auckland", label: "Auckland (NZST/NZDT)", region: "Australia & Pacific" },
-];
-
-// Format timezone for display
-const formatTimezone = (timezone: string): string => {
-    const found = timezones.find(tz => tz.value === timezone);
-    return found ? found.label : timezone;
-};
-
-
-
+import { isValidApiKey, isValidFriendlyId, generateApiKey, generateFriendlyId, timezones, formatTimezone } from "@/utils/helpers"
+import DeviceLogsContainer from "@/components/device-logs/device-logs-container"
 
 export default function DevicePage() {
     const router = useRouter()
     const params = useParams()
     const [device, setDevice] = useState<Device & { status?: string; type?: string } | null>(null)
-    const [deviceLogs, setDeviceLogs] = useState<ExtendedLog[]>([])
     const [isEditing, setIsEditing] = useState(false)
     const [editedDevice, setEditedDevice] = useState<Device & { status?: string; type?: string } | null>(null)
     const [isLoading, setIsLoading] = useState(true)
@@ -102,10 +53,6 @@ export default function DevicePage() {
 
                     setDevice(enhancedDevice)
                     setEditedDevice(JSON.parse(JSON.stringify(enhancedDevice)))
-
-                    // Fetch logs for this device
-                    const logs = await fetchDeviceLogs(friendlyId)
-                    setDeviceLogs(logs as ExtendedLog[])
                 } else {
                     // Handle device not found
                     console.error("Device not found")
@@ -151,7 +98,7 @@ export default function DevicePage() {
             setEditedDevice({
                 ...editedDevice,
                 [parent]: {
-                    ...(editedDevice[parent as keyof Device] as Record<string, any>),
+                    ...(editedDevice[parent as keyof Device] as Record<string, unknown>),
                     [child]: value,
                 },
             })
@@ -207,7 +154,7 @@ export default function DevicePage() {
             setEditedDevice({
                 ...editedDevice,
                 [parent]: {
-                    ...(editedDevice[parent as keyof Device] as Record<string, any>),
+                    ...(editedDevice[parent as keyof Device] as Record<string, unknown>),
                     [child]: value,
                 },
             })
@@ -321,7 +268,7 @@ export default function DevicePage() {
         setIsRefreshing(true)
 
         try {
-            const result = await refreshDeviceScreen(device.id)
+            const result = await refreshDeviceScreen(device.friendly_id)
 
             if (result.success) {
                 // Fetch the updated device to get the new next_expected_update time
@@ -335,10 +282,6 @@ export default function DevicePage() {
                     }
 
                     setDevice(enhancedDevice)
-
-                    // Fetch updated logs
-                    const logs = await fetchDeviceLogs(device.friendly_id)
-                    setDeviceLogs(logs as ExtendedLog[])
 
                     toast("Screen refresh triggered", {
                         description: "The device screen refresh has been triggered successfully."
@@ -370,29 +313,13 @@ export default function DevicePage() {
         }
 
         const currentTimeRanges = editedDevice.refresh_schedule?.time_ranges || []
-        const defaultRefreshRate = editedDevice.refresh_schedule?.default_refresh_rate || editedDevice.refresh_interval || 300
+        const defaultRefreshRate = editedDevice.refresh_schedule?.default_refresh_rate || 300
 
         setEditedDevice({
             ...editedDevice,
             refresh_schedule: {
                 default_refresh_rate: defaultRefreshRate,
                 time_ranges: [...currentTimeRanges, newTimeRange],
-            },
-        })
-    }
-
-    // Remove a time range from the refresh schedule
-    const handleRemoveTimeRange = (index: number) => {
-        if (!editedDevice || !editedDevice.refresh_schedule) return
-
-        const updatedTimeRanges = [...editedDevice.refresh_schedule.time_ranges]
-        updatedTimeRanges.splice(index, 1)
-
-        setEditedDevice({
-            ...editedDevice,
-            refresh_schedule: {
-                default_refresh_rate: editedDevice.refresh_schedule.default_refresh_rate,
-                time_ranges: updatedTimeRanges,
             },
         })
     }
@@ -420,7 +347,7 @@ export default function DevicePage() {
                 <div className="flex items-center gap-2">
                     <h2 className="text-xl font-semibold">{device.name}</h2>
                     <Badge variant={device.status === "online" ? "default" : "destructive"} className="text-xs">
-                        {device.status}
+                        {device.status}|diff:{new Date().getTime()/1000 - new Date(device.last_update_time || new Date()).getTime()/1000}|{device.last_refresh_duration}
                     </Badge>
                 </div>
                 <div className="flex items-center gap-2">
@@ -591,7 +518,7 @@ export default function DevicePage() {
                                         name="refresh_schedule.default_refresh_rate"
                                         type="number"
                                         value={
-                                            editedDevice?.refresh_schedule?.default_refresh_rate || editedDevice?.refresh_interval || 300
+                                            editedDevice?.refresh_schedule?.default_refresh_rate || 300
                                         }
                                         onChange={handleInputChange}
                                     />
@@ -693,7 +620,7 @@ export default function DevicePage() {
                             <div className="space-y-1">
                                 <p className="text-xs text-muted-foreground">Default Refresh Rate</p>
                                 <p className="text-sm font-medium">
-                                    {device.refresh_schedule?.default_refresh_rate || device.refresh_interval || 300} seconds
+                                    {device.refresh_schedule?.default_refresh_rate || 300} seconds
                                 </p>
                             </div>
                             <div className="space-y-1">
@@ -705,6 +632,11 @@ export default function DevicePage() {
                         </div>
                     </CardContent>
                 </Card>
+            )}
+
+            {/* Device Logs */}
+            {device && !isLoading && (
+                <DeviceLogsContainer device={device} />
             )}
         </div>
     )

@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase/server'
 
 export type LogLevel = 'info' | 'warn' | 'error' | 'debug'
 
@@ -16,6 +16,7 @@ export const log = async (
   // Convert Error objects to strings if necessary
   const messageText = message instanceof Error ? message.message : message
   const trace = message instanceof Error ? message.stack : options.trace
+  const supabase = await createClient();
 
   // Always do console logging first
   switch (level) {
@@ -139,7 +140,7 @@ export const readLogs = async (
     search,
     groupSimilar = true
   } = options;
-
+  const supabase = await createClient();
   // Start building the query
   let query = supabase
     .from('system_logs')

@@ -4,7 +4,6 @@ export type Device = {
   mac_address: string;
   api_key: string;
   friendly_id: string;
-  refresh_interval: number; // DEPRECATED: Use refresh_schedule.default_refresh_rate instead
   refresh_schedule: RefreshSchedule | null;
   timezone: string; // Device timezone (e.g., 'America/New_York', 'Europe/London')
   last_update_time: string | null; // ISO timestamp of last update

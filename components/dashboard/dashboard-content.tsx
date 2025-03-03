@@ -53,14 +53,6 @@ export const DashboardContent = ({
   const nameOfLastUpdatedDevice = lastUpdatedDevice?.name || 'Unknown';
   const lastUpdateTimeOfLastUpdatedDevice = lastUpdatedDevice?.last_update_time || '';
 
-  // Create loading skeletons for each section
-  const renderDeviceSkeletons = () => (
-    <div className="space-y-2">
-      {[...Array(3)].map((_, i) => (
-        <Skeleton key={i} className="h-10 w-full" />
-      ))}
-    </div>
-  );
 
   return (
     <>
@@ -106,15 +98,18 @@ export const DashboardContent = ({
             {lastUpdatedDevice ? (
               <>
                 <div className="relative rounded-xs overflow-hidden bg-muted flex items-center justify-center border">
-                  <img
-                    src={`https://api.manglekuo.com/api/dashboard/bitmap/${friendlyIdOfLastUpdatedDevice}.bmp`}
-                    alt="Bitmap"
-                    width={800}
-                    height={480}
-                    className="antialiased"
-                    style={{ imageRendering: 'pixelated' }}
-                    suppressHydrationWarning
-                  />
+
+                  <picture>
+                    <img
+                      src={`https://api.manglekuo.com/api/dashboard/bitmap/${friendlyIdOfLastUpdatedDevice}.bmp`}
+                      alt="Bitmap"
+                      width={800}
+                      height={480}
+                      className="antialiased"
+                      style={{ imageRendering: 'pixelated' }}
+                      suppressHydrationWarning
+                    />
+                  </picture>
                 </div>
                 <div className="text-xs text-amber-500 dark:text-amber-500/50 mt-2">
                   Warning: due to the passive nature of the device, the screen shown here might be newer than the actual screen

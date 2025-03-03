@@ -3,13 +3,14 @@
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { usePathname } from "next/navigation"
-import { ChevronDown, ChevronRight, Github, Menu, Monitor, Moon, Server, Sun, X } from "lucide-react"
+import { ChevronDown, ChevronRight, Github, Menu, Monitor, Moon, Server, Sun, X, Palette } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { StatusIndicator } from "@/components/ui/status-indicator"
 import type { Device } from "@/lib/supabase/types"
 import { getDeviceStatus } from "@/utils/helpers"
 import Link from "next/link"
+import components from "@/app/examples/components.json"
 
 interface MainLayoutProps {
   children: React.ReactNode
@@ -21,12 +22,15 @@ export default function MainLayout({ children, devices }: MainLayoutProps) {
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isDevicesOpen, setIsDevicesOpen] = useState(true)
+  const [isExamplesOpen, setIsExamplesOpen] = useState(false)
   const sidebarRef = useRef<HTMLDivElement>(null)
   const mainRef = useRef<HTMLDivElement>(null)
 
   // Determine if a path is active
   const isActivePath = (path: string) => pathname === path
   const isActiveDevicePath = (friendly_id: string) => pathname === `/device/${friendly_id}`
+  const isActiveExamplesPath = (slug: string) => pathname === `/examples/${slug}`
+  const isExamplesPath = pathname === '/examples' || pathname.startsWith('/examples/')
 
   // Toggle dark mode
   const toggleDarkMode = () => {
@@ -67,6 +71,11 @@ export default function MainLayout({ children, devices }: MainLayoutProps) {
     if (pathname.startsWith("/device/")) {
       setIsDevicesOpen(true)
     }
+    
+    // Open examples section if a examples page is active
+    if (pathname.startsWith("/examples/")) {
+      setIsExamplesOpen(true);
+    }
   }, [pathname])
 
   // Add status and type to devices
@@ -74,6 +83,11 @@ export default function MainLayout({ children, devices }: MainLayoutProps) {
     ...device,
     status: getDeviceStatus(device),
   }))
+
+  // Get examples components
+  const examplesComponents = Object.entries(components)
+    .filter(([, config]) => process.env.NODE_ENV !== "production" || config.published)
+    .sort((a, b) => a[1].title.localeCompare(b[1].title));
 
   return (
     <div className={`min-h-screen flex flex-col ${isDarkMode ? "dark" : ""}`}>
@@ -156,6 +170,47 @@ export default function MainLayout({ children, devices }: MainLayoutProps) {
                             className="ml-1" 
                           />
                         </div>
+                      </Link>
+                    </Button>
+                  ))}
+                </CollapsibleContent>
+              </Collapsible>
+
+              <Collapsible open={isExamplesOpen} onOpenChange={setIsExamplesOpen} className="w-full">
+                <CollapsibleTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className={`w-full justify-between text-sm h-9 ${isExamplesPath ? "bg-muted" : ""}`}
+                  >
+                    <div className="flex items-center">
+                      <Palette className="mr-2 h-4 w-4" />
+                      Examples
+                    </div>
+                    {isExamplesOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pl-6 space-y-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={`w-full justify-start text-sm h-8 ${isActivePath("/examples") ? "bg-muted" : ""}`}
+                    asChild
+                  >
+                    <Link href="/examples">
+                      <span className="truncate text-xs">All Components</span>
+                    </Link>
+                  </Button>
+                  
+                  {examplesComponents.map(([slug, config]) => (
+                    <Button
+                      key={slug}
+                      variant="ghost"
+                      size="sm"
+                      className={`w-full justify-start text-sm h-8 ${isActiveExamplesPath(slug) ? "bg-muted" : ""}`}
+                      asChild
+                    >
+                      <Link href={`/examples/${slug}`}>
+                        <span className="truncate text-xs">{config.title}</span>
                       </Link>
                     </Button>
                   ))}

@@ -3,22 +3,24 @@ import crypto from "crypto"
 
 // Format date to a readable format
 export function formatDate(dateString: string | null): string {
-  if (!dateString) return "Never"
+  if (!dateString) return "Never";
 
-  const date = new Date(dateString)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffSecs = Math.floor(diffMs / 1000)
-  const diffMins = Math.floor(diffSecs / 60)
-  const diffHours = Math.floor(diffMins / 60)
-  const diffDays = Math.floor(diffHours / 24)
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
 
-  if (diffSecs < 60) return `${diffSecs}s ago`
-  if (diffMins < 60) return `${diffMins}m ago`
-  if (diffHours < 24) return `${diffHours}h ago`
-  if (diffDays < 7) return `${diffDays}d ago`
-
-  return date.toLocaleDateString()
+  if (diffSecs < 60) return `${diffSecs}s ago`;
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) {
+    const options: Intl.DateTimeFormatOptions = { weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false };
+    return date.toLocaleString('en-US', options);
+  }
+  return date.toLocaleString('en-US', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
 // Determine device status based on next expected update time
@@ -90,3 +92,43 @@ export function generateFriendlyId(macAddress: string, salt: string = "FRIENDLY_
   const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   return hashString(macAddress, salt, 6, characters);
 }
+
+// Common IANA timezones grouped by region
+export const timezones = [
+  // Europe
+  { value: "Europe/London", label: "London (GMT/BST)", region: "Europe" },
+  { value: "Europe/Paris", label: "Paris (CET/CEST)", region: "Europe" },
+  { value: "Europe/Berlin", label: "Berlin (CET/CEST)", region: "Europe" },
+  { value: "Europe/Madrid", label: "Madrid (CET/CEST)", region: "Europe" },
+  { value: "Europe/Rome", label: "Rome (CET/CEST)", region: "Europe" },
+  { value: "Europe/Amsterdam", label: "Amsterdam (CET/CEST)", region: "Europe" },
+  { value: "Europe/Athens", label: "Athens (EET/EEST)", region: "Europe" },
+  { value: "Europe/Moscow", label: "Moscow (MSK)", region: "Europe" },
+
+  // North America
+  { value: "America/New_York", label: "New York (EST/EDT)", region: "North America" },
+  { value: "America/Chicago", label: "Chicago (CST/CDT)", region: "North America" },
+  { value: "America/Denver", label: "Denver (MST/MDT)", region: "North America" },
+  { value: "America/Los_Angeles", label: "Los Angeles (PST/PDT)", region: "North America" },
+  { value: "America/Toronto", label: "Toronto (EST/EDT)", region: "North America" },
+  { value: "America/Vancouver", label: "Vancouver (PST/PDT)", region: "North America" },
+
+  // Asia
+  { value: "Asia/Tokyo", label: "Tokyo (JST)", region: "Asia" },
+  { value: "Asia/Shanghai", label: "Shanghai (CST)", region: "Asia" },
+  { value: "Asia/Singapore", label: "Singapore (SGT)", region: "Asia" },
+  { value: "Asia/Dubai", label: "Dubai (GST)", region: "Asia" },
+  { value: "Asia/Hong_Kong", label: "Hong Kong (HKT)", region: "Asia" },
+
+  // Australia & Pacific
+  { value: "Australia/Sydney", label: "Sydney (AEST/AEDT)", region: "Australia & Pacific" },
+  { value: "Australia/Melbourne", label: "Melbourne (AEST/AEDT)", region: "Australia & Pacific" },
+  { value: "Australia/Perth", label: "Perth (AWST)", region: "Australia & Pacific" },
+  { value: "Pacific/Auckland", label: "Auckland (NZST/NZDT)", region: "Australia & Pacific" },
+];
+
+// Format timezone for display
+export const formatTimezone = (timezone: string): string => {
+  const found = timezones.find(tz => tz.value === timezone);
+  return found ? found.label : timezone;
+};

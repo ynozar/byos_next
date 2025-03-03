@@ -1,0 +1,55 @@
+{
+  "simple-text": {
+    "title": "Simple Text",
+    "published": true,
+    "createdAt": "2024-03-02T00:00:00Z",
+    "updatedAt": "2024-03-02T00:00:00Z",
+    "description": "A simple text component.",
+    "componentPath": "./screens/simple-text",
+    "hasDataFetch": false,
+    "props": {},
+    "tags": ["bitmap", "e-ink", "display", "text"],
+    "author": {
+      "name": "Mangle Kuo",
+      "github": "ghcpuman902"
+    },
+    "version": "0.1.0",
+    "category": "display-components"
+  },
+  "bitmap-patterns": {
+    "title": "Bitmap Patterns",
+    "published": true,
+    "createdAt": "2024-03-03T00:00:00Z",
+    "updatedAt": "2024-03-03T00:00:00Z",
+    "description": "Demonstrating using custom classes to create bitmap patterns. See /utils/pre-satori.ts for more details. Edit this screen at /app/screens/BitmapPatterns.tsx",
+    "componentPath": "./screens/bitmap-patterns",
+    "hasDataFetch": false,
+    "props": {},
+    "tags": ["bitmap", "e-ink", "display", "patterns"],
+    "author": {
+      "name": "Mangle Kuo",
+      "github": "ghcpuman902"
+    },
+    "version": "0.1.0",
+    "category": "display-components"
+  },
+  "fetch-data": {
+    "title": "Fetch Data",
+    "published": true,
+    "createdAt": "2024-03-03T00:00:00Z",
+    "updatedAt": "2024-03-03T00:00:00Z",
+    "description": "A component that demonstrates fetching data from Wikipedia.",
+    "componentPath": "./screens/fetch-data",
+    "hasDataFetch": true,
+    "props": {
+      "dataText": "Hello World (Default)"
+    },
+    "tags": ["tailwind", "e-ink", "display", "text"],
+    "author": {
+      "name": "Mangle Kuo",
+      "github": "ghcpuman902"
+    },
+    "version": "0.1.0",
+    "category": "display-components"
+  }
+} 
