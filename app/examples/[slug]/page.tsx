@@ -110,8 +110,7 @@ const BitmapImage = ({ bmpBuffer, title }: { bmpBuffer: Buffer, title: string })
 // Component to render the component props
 const ComponentProps = ({ props, slug }: { props: typeof screens[keyof typeof screens]['props'], slug: string }) => {
   if (Object.keys(props).length === 0) return null;
-
-
+  
   async function refreshData() {
     'use server'
     revalidateTag(slug)
@@ -198,9 +197,11 @@ const ComponentContent = ({ slug }: { slug: string }) => {
           </div>
         </ScreenPreviewLayout>
 
-        <Suspense fallback={<div className="w-full h-full flex items-center justify-center">Loading props...</div>}>
-          <ComponentProps props={props} slug={slug} />
-        </Suspense>
+        {config.hasDataFetch && (
+          <Suspense fallback={<div className="w-full h-full flex items-center justify-center">Loading props...</div>}>
+            <ComponentProps props={props} slug={slug} />
+          </Suspense>
+        )}
       </div>
     </div>
   );

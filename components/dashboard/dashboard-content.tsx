@@ -49,11 +49,6 @@ export const DashboardContent = ({
     )[0]
     : null;
 
-  const friendlyIdOfLastUpdatedDevice = lastUpdatedDevice?.friendly_id || '';
-  const nameOfLastUpdatedDevice = lastUpdatedDevice?.name || 'Unknown';
-  const lastUpdateTimeOfLastUpdatedDevice = lastUpdatedDevice?.last_update_time || '';
-
-
   return (
     <>
       <div className="grid gap-2 md:gap-4 md:grid-cols-2">
@@ -90,7 +85,7 @@ export const DashboardContent = ({
             <CardTitle>Latest Screen</CardTitle>
             <CardDescription suppressHydrationWarning>
               {lastUpdatedDevice
-                ? `Most recent screen, requested by ${nameOfLastUpdatedDevice} (${friendlyIdOfLastUpdatedDevice}) ${formatDate(lastUpdateTimeOfLastUpdatedDevice)}`
+                ? `Most recent screen, requested by ${lastUpdatedDevice?.name} (${lastUpdatedDevice?.friendly_id}) ${formatDate(lastUpdatedDevice?.last_update_time)}`
                 : 'No devices available'}
             </CardDescription>
           </CardHeader>
@@ -101,7 +96,7 @@ export const DashboardContent = ({
 
                   <picture>
                     <img
-                      src={`https://api.manglekuo.com/api/dashboard/bitmap/${friendlyIdOfLastUpdatedDevice}.bmp`}
+                      src={`/api/bitmap/${lastUpdatedDevice?.screen}.bmp`}
                       alt="Bitmap"
                       width={800}
                       height={480}
@@ -142,7 +137,9 @@ export const DashboardContent = ({
                     <div key={device.id} className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
                       <div className="flex items-center gap-2">
                         <StatusIndicator status="online" size="md" />
-                        <span className="text-sm">{device.name}</span>
+                        <Link href={`/device/${device.friendly_id}`} className="text-sm">
+                          {device.name}
+                        </Link>
                       </div>
                       <span className="text-xs text-muted-foreground" suppressHydrationWarning>{formatDate(device.last_update_time)}</span>
                     </div>
@@ -160,7 +157,9 @@ export const DashboardContent = ({
                     <div key={device.id} className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
                       <div className="flex items-center gap-2">
                         <StatusIndicator status="offline" size="md" />
-                        <span className="text-sm">{device.name}</span>
+                        <Link href={`/device/${device.friendly_id}`} className="text-sm">
+                          {device.name}
+                        </Link>
                       </div>
                       <span className="text-xs text-muted-foreground" suppressHydrationWarning>{formatDate(device.last_update_time)}</span>
                     </div>

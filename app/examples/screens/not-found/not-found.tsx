@@ -10,7 +10,7 @@ export default function NotFoundScreen({ slug }: { slug?: string }) {
             Could not find screen: {slug}
           </div>
         )}
-        <div className="text-md mt-8 text-gray-500 text-center">
+        <div className="text-2xl mt-8 text-gray-500 text-center">
           Please check your configuration or create this screen.
         </div>
       </div>

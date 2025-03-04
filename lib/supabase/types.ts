@@ -10,6 +10,9 @@ export type Device = {
   last_update_time: string | null; // ISO timestamp of last update
   next_expected_update: string | null; // ISO timestamp of next expected update
   last_refresh_duration: number | null; // in seconds
+  battery_voltage: number | null; // Battery voltage in volts
+  firmware_version: string | null; // Firmware version
+  rssi: number | null; // WiFi signal strength in dBm
   created_at: string;
   updated_at: string;
 }

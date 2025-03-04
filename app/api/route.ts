@@ -102,11 +102,15 @@ const isTimeInRange = (timeToCheck: string, startTime: string, endTime: string):
     return timeToCheck >= startTime && timeToCheck < endTime;
 };
 
-// Helper function to update device refresh status information
-const updateDeviceRefreshStatus = async (
-    deviceId: string,
+
+// Helper function to update device status information
+const updateDeviceStatus = async (
+    friendlyId: string,
     refreshDurationSeconds: number,
-    timezone: string = 'UTC'
+    timezone: string = 'Europe/London',
+    batteryVoltage: number,
+    fwVersion: string,
+    rssi: number
 ): Promise<void> => {
     const now = new Date();
     const nextExpectedUpdate = new Date(now.getTime() + (refreshDurationSeconds * 1000));
@@ -118,26 +122,32 @@ const updateDeviceRefreshStatus = async (
             .update({
                 last_update_time: now.toISOString(),
                 next_expected_update: nextExpectedUpdate.toISOString(),
-                last_refresh_duration: Math.round(refreshDurationSeconds)
+                last_refresh_duration: Math.round(refreshDurationSeconds),
+                battery_voltage: batteryVoltage,
+                firmware_version: fwVersion,
+                rssi: rssi
             })
-            .eq('friendly_id', deviceId);
+            .eq('friendly_id', friendlyId);
 
         if (error) {
             logError(error, {
-                source: 'api/display/updateDeviceRefreshStatus',
+                source: 'api/setup/updateDeviceStatus',
                 metadata: {
-                    deviceId,
+                    friendlyId,
                     refreshDurationSeconds,
                     timezone,
                     last_update_time: now.toISOString(),
-                    next_expected_update: nextExpectedUpdate.toISOString()
+                    next_expected_update: nextExpectedUpdate.toISOString(),
+                    battery_voltage: batteryVoltage,
+                    firmware_version: fwVersion,
+                    rssi: rssi
                 }
             });
         }
     } catch (error) {
         logError(error as Error, {
-            source: 'api/display/updateDeviceRefreshStatus',
-            metadata: { deviceId, refreshDurationSeconds, timezone }
+            source: 'api/setup/updateDeviceStatus',
+            metadata: { friendlyId, refreshDurationSeconds, timezone, batteryVoltage, fwVersion, rssi }
         });
     }
 };
@@ -242,7 +252,7 @@ export async function GET(request: Request) {
 
         // Update device refresh status information in the background
         // We don't await this to avoid delaying the response
-        updateDeviceRefreshStatus(device.friendly_id, dynamicRefreshRate, deviceTimezone);
+        updateDeviceStatus(device.friendly_id, dynamicRefreshRate, deviceTimezone, Number(batteryVoltage), fwVersion || '', Number(rssi));
 
         // Prepare for the next frame in the background
         // This will generate and pre-cache the next image that will be used in the future

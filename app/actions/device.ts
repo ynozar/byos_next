@@ -138,6 +138,9 @@ export async function updateDevice(device: Partial<Device> & { id: number }): Pr
     timezone: device.timezone,
     refresh_schedule: device.refresh_schedule as RefreshSchedule,
     screen: device.screen,
+    battery_voltage: device.battery_voltage,
+    firmware_version: device.firmware_version,
+    rssi: device.rssi,
     updated_at: new Date().toISOString(),
   }
   

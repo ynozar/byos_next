@@ -23,6 +23,16 @@ import screens from "@/app/examples/screens.json"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AspectRatio } from "@/components/ui/aspect-ratio"
 import Image from "next/image"
+
+// Helper function to convert RSSI to signal quality description
+const getSignalQuality = (rssi: number): string => {
+    if (rssi >= -50) return "Excellent";
+    if (rssi >= -60) return "Good";
+    if (rssi >= -70) return "Fair";
+    if (rssi >= -80) return "Poor";
+    return "Very Poor";
+};
+
 export default function DevicePage() {
     const router = useRouter()
     const params = useParams()
@@ -324,7 +334,7 @@ export default function DevicePage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div className="flex items-center gap-2">
                     <h2 className="text-xl font-semibold">{device.name}</h2>
-                    <Badge variant={device.status === "online" ? "default" : "destructive"} className="text-xs">
+                    <Badge className={`text-xs ${device.status === "online" ? "bg-green-500" : "bg-red-500"}`}>
                         {device.status}
                     </Badge>
                 </div>
@@ -488,6 +498,36 @@ export default function DevicePage() {
                                         onChange={handleInputChange}
                                     />
                                 </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="battery_voltage">Battery Voltage (V)</Label>
+                                    <Input
+                                        id="battery_voltage"
+                                        name="battery_voltage"
+                                        type="number"
+                                        step="0.01"
+                                        value={editedDevice?.battery_voltage || ""}
+                                        onChange={handleInputChange}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="firmware_version">Firmware Version</Label>
+                                    <Input
+                                        id="firmware_version"
+                                        name="firmware_version"
+                                        value={editedDevice?.firmware_version || ""}
+                                        onChange={handleInputChange}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="rssi">WiFi Signal Strength (dBm)</Label>
+                                    <Input
+                                        id="rssi"
+                                        name="rssi"
+                                        type="number"
+                                        value={editedDevice?.rssi || ""}
+                                        onChange={handleInputChange}
+                                    />
+                                </div>
                             </div>
 
                             <div className="border-t pt-4 mt-4">
@@ -588,50 +628,89 @@ export default function DevicePage() {
                     </form>
                 </Card>
             ) : (
-                <Card className="mb-6">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-base">Device Information</CardTitle>
-                        <CardDescription className="text-xs">View device details and configuration</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-1">
-                                <p className="text-xs text-muted-foreground">Device Name</p>
-                                <p className="text-sm font-medium">{device.name}</p>
-                            </div>
-                            <div className="space-y-1">
-                                <p className="text-xs text-muted-foreground">Friendly ID</p>
-                                <p className="text-sm font-medium">{device.friendly_id}</p>
-                            </div>
-                            <div className="space-y-1">
-                                <p className="text-xs text-muted-foreground">MAC Address</p>
-                                <p className="text-sm font-medium">{device.mac_address}</p>
-                            </div>
-                            <div className="space-y-1">
-                                <p className="text-xs text-muted-foreground">Timezone</p>
-                                <p className="text-sm font-medium">{formatTimezone(device.timezone)}</p>
-                            </div>
-                            <div className="space-y-1">
-                                <p className="text-xs text-muted-foreground">Default Refresh Rate</p>
-                                <p className="text-sm font-medium">
-                                    {device.refresh_schedule?.default_refresh_rate || 300} seconds
-                                </p>
-                            </div>
-                            <div className="space-y-1">
-                                <p className="text-xs text-muted-foreground">Last Updated</p>
-                                <p className="text-sm font-medium">
-                                    {device.last_update_time ? formatDate(device.last_update_time) : "Never"}
-                                </p>
-                            </div>
-                        </div>
-                        <div className="w-full max-w-3xl">
-                            <AspectRatio ratio={16 / 9}>
-                                <Image src={`/api/bitmap/${device?.screen}.bmp`} overrideSrc={`/api/bitmap/${device?.screen}.bmp`} alt="Device Screen" fill className="object-cover rounded-xs ring-2 ring-gray-200" style={{ imageRendering: 'pixelated' }} unoptimized />
-                            </AspectRatio>
-                            <p className="text-sm text-muted-foreground">{device?.screen}</p>
-                        </div>
-                    </CardContent>
-                </Card>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base">Device Information</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <dl className="space-y-4">
+                                <div>
+                                    <dt className="text-sm font-medium text-muted-foreground">Name</dt>
+                                    <dd className="text-sm">{device.name}</dd>
+                                </div>
+                                <div>
+                                    <dt className="text-sm font-medium text-muted-foreground">Friendly ID</dt>
+                                    <dd className="text-sm font-mono">{device.friendly_id}</dd>
+                                </div>
+                                <div>
+                                    <dt className="text-sm font-medium text-muted-foreground">MAC Address</dt>
+                                    <dd className="text-sm">{device.mac_address}</dd>
+                                </div>
+                                <div>
+                                    <dt className="text-sm font-medium text-muted-foreground">Timezone</dt>
+                                    <dd className="text-sm">{formatTimezone(device.timezone)}</dd>
+                                </div>
+                                <div>
+                                    <dt className="text-sm font-medium text-muted-foreground">Last Update</dt>
+                                    <dd className="text-sm">
+                                        {device.last_update_time
+                                            ? formatDate(device.last_update_time)
+                                            : "Never"}
+                                    </dd>
+                                </div>
+                            </dl>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base">Device Status</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <dl className="space-y-4">
+                                <div>
+                                    <dt className="text-sm font-medium text-muted-foreground">Battery Voltage</dt>
+                                    <dd className="text-sm">
+                                        {device.battery_voltage 
+                                            ? `${device.battery_voltage.toFixed(2)}V` 
+                                            : "Unknown"}
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt className="text-sm font-medium text-muted-foreground">Firmware Version</dt>
+                                    <dd className="text-sm">
+                                        {device.firmware_version || "Unknown"}
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt className="text-sm font-medium text-muted-foreground">WiFi Signal Strength</dt>
+                                    <dd className="text-sm">
+                                        {device.rssi 
+                                            ? `${device.rssi} dBm (${getSignalQuality(device.rssi)})` 
+                                            : "Unknown"}
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt className="text-sm font-medium text-muted-foreground">Last Refresh Duration</dt>
+                                    <dd className="text-sm">
+                                        {device.last_refresh_duration 
+                                            ? `${device.last_refresh_duration} seconds` 
+                                            : "Unknown"}
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt className="text-sm font-medium text-muted-foreground">Next Expected Update</dt>
+                                    <dd className="text-sm">
+                                        {device.next_expected_update
+                                            ? formatDate(device.next_expected_update)
+                                            : "Unknown"}
+                                    </dd>
+                                </div>
+                            </dl>
+                        </CardContent>
+                    </Card>
+                </div>
             )}
 
             {/* Device Logs */}

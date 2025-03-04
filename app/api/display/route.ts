@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { logError, logInfo } from '@/lib/logger'
-import { RefreshSchedule, TimeRange } from '@/lib/supabase/types'
+import { RefreshSchedule, TimeRange, Device } from '@/lib/supabase/types'
 import { CustomError } from '@/lib/api/types'
 import { timezones } from '@/utils/helpers'
 import { getLocalIPAddresses } from "@/utils/helpers";
-
 
 // Helper function to pre-cache the image in the background
 const precacheImageInBackground = (imageUrl: string, deviceId: string): void => {
@@ -98,11 +97,14 @@ const isTimeInRange = (timeToCheck: string, startTime: string, endTime: string):
     return timeToCheck >= startTime && timeToCheck < endTime;
 };
 
-// Helper function to update device refresh status information
-const updateDeviceRefreshStatus = async (
+// Helper function to update device status information
+const updateDeviceStatus = async (
     friendlyId: string,
     refreshDurationSeconds: number,
-    timezone: string = 'UTC'
+    timezone: string = 'Europe/London',
+    batteryVoltage: number,
+    fwVersion: string,
+    rssi: number
 ): Promise<void> => {
     const now = new Date();
     const nextExpectedUpdate = new Date(now.getTime() + (refreshDurationSeconds * 1000));
@@ -114,26 +116,32 @@ const updateDeviceRefreshStatus = async (
             .update({
                 last_update_time: now.toISOString(),
                 next_expected_update: nextExpectedUpdate.toISOString(),
-                last_refresh_duration: Math.round(refreshDurationSeconds)
+                last_refresh_duration: Math.round(refreshDurationSeconds),
+                battery_voltage: batteryVoltage,
+                firmware_version: fwVersion,
+                rssi: rssi
             })
             .eq('friendly_id', friendlyId);
 
         if (error) {
             logError(error, {
-                source: 'api/display/updateDeviceRefreshStatus',
+                source: 'api/display/updateDeviceStatus',
                 metadata: {
                     friendlyId,
                     refreshDurationSeconds,
                     timezone,
                     last_update_time: now.toISOString(),
-                    next_expected_update: nextExpectedUpdate.toISOString()
+                    next_expected_update: nextExpectedUpdate.toISOString(),
+                    battery_voltage: batteryVoltage,
+                    firmware_version: fwVersion,
+                    rssi: rssi
                 }
             });
         }
     } catch (error) {
         logError(error as Error, {
-            source: 'api/display/updateDeviceRefreshStatus',
-            metadata: { friendlyId, refreshDurationSeconds, timezone }
+            source: 'api/display/updateDeviceStatus',
+            metadata: { friendlyId, refreshDurationSeconds, timezone, batteryVoltage, fwVersion, rssi }
         });
     }
 };
@@ -202,6 +210,43 @@ export async function GET(request: Request) {
             }, { status: 200 })
         }
 
+        // Update device status information
+        const updateData: Partial<Device> = {
+            last_update_time: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        };
+
+        // Add device metrics if available
+        if (batteryVoltage) {
+            updateData.battery_voltage = parseFloat(batteryVoltage);
+        }
+        
+        if (fwVersion) {
+            updateData.firmware_version = fwVersion;
+        }
+        
+        if (rssi) {
+            updateData.rssi = parseInt(rssi, 10);
+        }
+
+        // Update the device in the database
+        const { error: updateError } = await supabase
+            .from('devices')
+            .update(updateData)
+            .eq('id', device.id);
+
+        if (updateError) {
+            logError(updateError, {
+                source: 'api/display/updateDeviceStatus',
+                metadata: {
+                    deviceId: device.id,
+                    batteryVoltage,
+                    fwVersion,
+                    rssi
+                }
+            });
+        }
+
         logInfo('Device database info', {
             source: 'api/display',
             metadata: {
@@ -213,6 +258,9 @@ export async function GET(request: Request) {
                 last_update_time: device.last_update_time,
                 next_expected_update: device.next_expected_update,
                 last_refresh_duration: device.last_refresh_duration,
+                battery_voltage: device.battery_voltage,
+                firmware_version: device.firmware_version,
+                rssi: device.rssi,
                 screen: device.screen,
             }
         });
@@ -240,7 +288,7 @@ export async function GET(request: Request) {
 
         // Update device refresh status information in the background
         // We don't await this to avoid delaying the response
-        updateDeviceRefreshStatus(device.friendly_id, dynamicRefreshRate, deviceTimezone);
+        updateDeviceStatus(device.friendly_id, dynamicRefreshRate, deviceTimezone, Number(batteryVoltage), fwVersion || '', Number(rssi));
 
         // Prepare for the next frame in the background
         // This will generate and pre-cache the next image that will be used in the future
