@@ -12,14 +12,17 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { fetchDeviceByFriendlyId, updateDevice, refreshDeviceScreen } from "@/app/actions/device-actions"
+import { fetchDeviceByFriendlyId, updateDevice } from "@/app/actions/device"
 import { toast } from "sonner"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { isValidApiKey, isValidFriendlyId, generateApiKey, generateFriendlyId, timezones, formatTimezone } from "@/utils/helpers"
 import DeviceLogsContainer from "@/components/device-logs/device-logs-container"
-
+import screens from "@/app/examples/screens.json"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { AspectRatio } from "@/components/ui/aspect-ratio"
+import Image from "next/image"
 export default function DevicePage() {
     const router = useRouter()
     const params = useParams()
@@ -27,8 +30,13 @@ export default function DevicePage() {
     const [isEditing, setIsEditing] = useState(false)
     const [editedDevice, setEditedDevice] = useState<Device & { status?: string; type?: string } | null>(null)
     const [isLoading, setIsLoading] = useState(true)
-    const [isRefreshing, setIsRefreshing] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
+
+    // Convert components to availableScreens array directly
+    const availableScreens = Object.entries(screens).map(([id, config]) => ({
+        id,
+        title: config.title
+    }));
 
     // State for validation error messages
     const [apiKeyError, setApiKeyError] = useState<string | null>(null);
@@ -166,6 +174,16 @@ export default function DevicePage() {
         }
     }
 
+    // Handle screen change
+    const handleScreenChange = (screenId: string | null) => {
+        if (!editedDevice) return;
+
+        setEditedDevice({
+            ...editedDevice,
+            screen: screenId
+        });
+    }
+
     // Handle form submission
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -196,6 +214,7 @@ export default function DevicePage() {
                 friendly_id: editedDevice.friendly_id,
                 timezone: editedDevice.timezone,
                 refresh_schedule: editedDevice.refresh_schedule,
+                screen: editedDevice.screen,
             })
 
             if (result.success) {
@@ -261,47 +280,6 @@ export default function DevicePage() {
         setFriendlyIdError(null); // Clear the error message
     }
 
-    // Handle screen refresh
-    const handleRefreshScreen = async () => {
-        if (!device) return
-
-        setIsRefreshing(true)
-
-        try {
-            const result = await refreshDeviceScreen(device.friendly_id)
-
-            if (result.success) {
-                // Fetch the updated device to get the new next_expected_update time
-                const updatedDevice = await fetchDeviceByFriendlyId(device.friendly_id)
-
-                if (updatedDevice) {
-                    // Update the device state with the latest data
-                    const enhancedDevice = {
-                        ...updatedDevice,
-                        status: getDeviceStatus(updatedDevice),
-                    }
-
-                    setDevice(enhancedDevice)
-
-                    toast("Screen refresh triggered", {
-                        description: "The device screen refresh has been triggered successfully."
-                    })
-                }
-            } else {
-                toast.error("Refresh failed", {
-                    description: result.error || "Failed to refresh device screen. Please try again."
-                })
-            }
-        } catch (error) {
-            console.error("Error refreshing device screen:", error)
-            toast.error("Refresh failed", {
-                description: "An unexpected error occurred. Please try again."
-            })
-        } finally {
-            setIsRefreshing(false)
-        }
-    }
-
     // Add a time range to the refresh schedule
     const handleAddTimeRange = () => {
         if (!editedDevice) return
@@ -347,7 +325,7 @@ export default function DevicePage() {
                 <div className="flex items-center gap-2">
                     <h2 className="text-xl font-semibold">{device.name}</h2>
                     <Badge variant={device.status === "online" ? "default" : "destructive"} className="text-xs">
-                        {device.status}|diff:{new Date().getTime()/1000 - new Date(device.last_update_time || new Date()).getTime()/1000}|{device.last_refresh_duration}
+                        {device.status}
                     </Badge>
                 </div>
                 <div className="flex items-center gap-2">
@@ -376,19 +354,6 @@ export default function DevicePage() {
                             <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>
                                 Edit Device
                             </Button>
-                            <Button size="sm" onClick={handleRefreshScreen} disabled={isRefreshing}>
-                                {isRefreshing ? (
-                                    <>
-                                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                                        Refreshing...
-                                    </>
-                                ) : (
-                                    <>
-                                        <RefreshCw className="h-4 w-4 mr-2" />
-                                        Refresh Screen
-                                    </>
-                                )}
-                            </Button>
                         </>
                     )}
                 </div>
@@ -397,7 +362,7 @@ export default function DevicePage() {
             {/* Device Details and Refresh Schedule */}
             {isEditing ? (
                 <Card className="mb-6">
-                    <CardHeader className="pb-2">
+                    <CardHeader>
                         <CardTitle className="text-base">Edit Device Information</CardTitle>
                         <CardDescription className="text-xs">Update device details and configuration</CardDescription>
                     </CardHeader>
@@ -575,6 +540,35 @@ export default function DevicePage() {
                                     Add Time Range
                                 </Button>
                             </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="screen">Screen Component</Label>
+                                <Select
+                                    value={editedDevice?.screen || ""}
+                                    onValueChange={(value) => handleScreenChange(value === "none" ? null : value)}
+                                    disabled={!isEditing}
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Select screen..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">None (Use default)</SelectItem>
+                                        {availableScreens.map((screen) => (
+                                            <SelectItem key={screen.id} value={screen.id}>
+                                                {screen.title}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <p className="text-sm text-muted-foreground">
+                                    The screen component to display on this device. If not set, the default screen will be used.
+                                </p>
+                            </div>
+                            <div className="w-full max-w-3xl">
+                                <AspectRatio ratio={16 / 9}>
+                                    <Image src={`/api/bitmap/${editedDevice?.screen || 'simple-text'}.bmp`} alt="Device Screen" fill className="object-cover rounded-xs ring-2 ring-gray-200" style={{ imageRendering: 'pixelated' }} />
+                                </AspectRatio>
+                            </div>
                         </CardContent>
                         <CardFooter className="flex justify-end space-x-2">
                             <Button type="button" variant="outline" onClick={handleCancel} disabled={isSaving}>
@@ -629,6 +623,12 @@ export default function DevicePage() {
                                     {device.last_update_time ? formatDate(device.last_update_time) : "Never"}
                                 </p>
                             </div>
+                        </div>
+                        <div className="w-full max-w-3xl">
+                            <AspectRatio ratio={16 / 9}>
+                                <Image src={`/api/bitmap/${device?.screen}.bmp`} alt="Device Screen" fill className="object-cover rounded-xs ring-2 ring-gray-200" style={{ imageRendering: 'pixelated' }} />
+                            </AspectRatio>
+                            <p className="text-sm text-muted-foreground">{device?.screen}</p>
                         </div>
                     </CardContent>
                 </Card>

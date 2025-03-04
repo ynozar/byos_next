@@ -51,7 +51,6 @@ export type FetchDeviceLogsParams = {
   page: number
   perPage: number
   search?: string
-  deviceId?: number
   friendlyId?: string
 }
 
@@ -138,6 +137,7 @@ export async function updateDevice(device: Partial<Device> & { id: number }): Pr
     friendly_id: device.friendly_id,
     timezone: device.timezone,
     refresh_schedule: device.refresh_schedule as RefreshSchedule,
+    screen: device.screen,
     updated_at: new Date().toISOString(),
   }
   
@@ -160,46 +160,3 @@ export async function updateDevice(device: Partial<Device> & { id: number }): Pr
   
   return { success: true }
 }
-
-/**
- * Trigger a screen refresh for a device
- */
-export async function refreshDeviceScreen(friendlyId: string): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createClient()
-  
-  // In a real implementation, this would trigger the device to refresh its screen
-  // For now, we'll just log this action
-  const { error } = await supabase
-    .from("logs")
-    .insert({
-      friendly_id: friendlyId,
-      log_data: "Manual screen refresh triggered"
-    })
-  
-  if (error) {
-    console.error("Error logging refresh action:", error)
-    return { success: false, error: error.message }
-  }
-  
-  // Update the device's next_expected_update time to now + refresh_interval
-  const { data: device } = await supabase
-    .from("devices")
-    .select("refresh_schedule, refresh_interval")
-    .eq("friendly_id", friendlyId)
-    .single()
-  
-  if (device) {
-    const refreshRate = device.refresh_schedule?.default_refresh_rate || device.refresh_interval || 300
-    const nextUpdate = new Date(Date.now() + refreshRate * 1000).toISOString()
-    
-    await supabase
-      .from("devices")
-      .update({
-        next_expected_update: nextUpdate,
-        last_update_time: new Date().toISOString()
-      })
-      .eq("friendly_id", friendlyId)
-  }
-  
-  return { success: true }
-} 

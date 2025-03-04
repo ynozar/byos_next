@@ -4,6 +4,7 @@ export type Device = {
   mac_address: string;
   api_key: string;
   friendly_id: string;
+  screen: string | null; // Screen identifier that maps to a screen component
   refresh_schedule: RefreshSchedule | null;
   timezone: string; // Device timezone (e.g., 'America/New_York', 'Europe/London')
   last_update_time: string | null; // ISO timestamp of last update

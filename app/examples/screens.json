@@ -51,5 +51,24 @@
     },
     "version": "0.1.0",
     "category": "display-components"
+  },
+  "not-found": {
+    "title": "Not Found Screen",
+    "published": true,
+    "createdAt": "2024-05-01T00:00:00Z",
+    "updatedAt": "2024-05-01T00:00:00Z",
+    "description": "A fallback screen displayed when a requested screen is not found.",
+    "componentPath": "./screens/not-found",
+    "hasDataFetch": false,
+    "props": {
+      "slug": ""
+    },
+    "tags": ["system", "fallback", "error"],
+    "author": {
+      "name": "System",
+      "github": ""
+    },
+    "version": "1.0.0",
+    "category": "system-components"
   }
 } 

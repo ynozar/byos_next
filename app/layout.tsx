@@ -29,17 +29,24 @@ export const metadata: Metadata = {
   description: "Device management dashboard",
 }
 
+async function getDevicesPromise() {
+  const supabase = await createClient()
+  const devicesPromise = supabase.from("devices").select("*")
+  .then(({ data, error }) => {
+    if (error) throw error; // Rejects the promise if there's an error
+    return data; // Resolves only with the data
+  });
+  return devicesPromise;
+}
+
+
 
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = await createClient()
-  const { data: devices, error } = await supabase
-    .from('devices')
-    .select('*');
-
+  const devicesPromise = getDevicesPromise()
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -70,13 +77,9 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <Suspense fallback={<div>Loading...</div>}>
-            {error ? (
-              <div>Error loading devices</div>
-            ) : (
-              <MainLayout devices={devices}>
-                {children}
-              </MainLayout>
-            )}
+            <MainLayout devicesPromise={devicesPromise}>
+              {children}
+            </MainLayout>
           </Suspense>
           <Toaster />
         </ThemeProvider>

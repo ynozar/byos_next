@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, Suspense, use } from "react"
 import { usePathname } from "next/navigation"
 import { ChevronDown, ChevronRight, Github, Menu, Monitor, Moon, Server, Sun, X, Palette } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -10,21 +10,124 @@ import { StatusIndicator } from "@/components/ui/status-indicator"
 import type { Device } from "@/lib/supabase/types"
 import { getDeviceStatus } from "@/utils/helpers"
 import Link from "next/link"
-import components from "@/app/examples/components.json"
+import screens from "@/app/examples/screens.json"
+import { useTheme } from "next-themes"
+import { Skeleton } from "@/components/ui/skeleton"
+
+// Loading fallbacks for different sections
+const DeviceListFallback = () => (
+  <div className="pl-6 space-y-1">
+    {[1, 2, 3].map((i) => (
+      <div key={i} className="flex items-center w-full py-1">
+        <Skeleton className="h-6 w-full" />
+      </div>
+    ))}
+  </div>
+)
+
+const ExamplesListFallback = () => (
+  <div className="pl-6 space-y-1">
+    {[1, 2, 3, 4].map((i) => (
+      <div key={i} className="flex items-center w-full py-1">
+        <Skeleton className="h-6 w-full" />
+      </div>
+    ))}
+  </div>
+)
+
+const MainContentFallback = () => (
+  <div className="p-6 space-y-4">
+    <Skeleton className="h-8 w-1/3" />
+    <Skeleton className="h-32 w-full" />
+    <Skeleton className="h-32 w-full" />
+  </div>
+)
+
+// Device list component to wrap in Suspense
+const DeviceList = ({ devices, isActiveDevicePath }: { 
+  devices: (Device & { status: string })[], 
+  isActiveDevicePath: (id: string) => boolean 
+}) => {
+  return (
+    <>
+      {devices.map((device) => (
+        <Button
+          key={device.id}
+          variant="ghost"
+          size="sm"
+          className={`w-full justify-start text-sm h-8 ${isActiveDevicePath(device.friendly_id) ? "bg-muted" : ""}`}
+          asChild
+        >
+          <Link href={`/device/${device.friendly_id}`}>
+            <div className="flex items-center w-full">
+              <span className="truncate text-xs">{device.name}</span>
+              <StatusIndicator 
+                status={device.status as "online" | "offline"} 
+                size="sm" 
+                className="ml-1" 
+              />
+            </div>
+          </Link>
+        </Button>
+      ))}
+    </>
+  )
+}
+
+// Examples list component to wrap in Suspense
+const ExamplesList = ({ 
+  components, 
+  isActiveExamplesPath, 
+  isActivePath 
+}: { 
+  components: [string, typeof screens[keyof typeof screens]][], 
+  isActiveExamplesPath: (slug: string) => boolean,
+  isActivePath: (path: string) => boolean
+}) => {
+  return (
+    <>
+      <Button
+        variant="ghost"
+        size="sm"
+        className={`w-full justify-start text-sm h-8 ${isActivePath("/examples") ? "bg-muted" : ""}`}
+        asChild
+      >
+        <Link href="/examples">
+          <span className="truncate text-xs">All Components</span>
+        </Link>
+      </Button>
+      
+      {components.map(([slug, config]) => (
+        <Button
+          key={slug}
+          variant="ghost"
+          size="sm"
+          className={`w-full justify-start text-sm h-8 ${isActiveExamplesPath(slug) ? "bg-muted" : ""}`}
+          asChild
+        >
+          <Link href={`/examples/${slug}`}>
+            <span className="truncate text-xs">{config.title}</span>
+          </Link>
+        </Button>
+      ))}
+    </>
+  )
+}
 
 interface MainLayoutProps {
   children: React.ReactNode
-  devices: Device[]
+  devicesPromise: Promise<Device[]>
 }
 
-export default function MainLayout({ children, devices }: MainLayoutProps) {
+export default function MainLayout({ children, devicesPromise }: MainLayoutProps) {
+  const devices = use(devicesPromise)
   const pathname = usePathname()
-  const [isDarkMode, setIsDarkMode] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isDevicesOpen, setIsDevicesOpen] = useState(true)
   const [isExamplesOpen, setIsExamplesOpen] = useState(false)
   const sidebarRef = useRef<HTMLDivElement>(null)
   const mainRef = useRef<HTMLDivElement>(null)
+  const { theme, setTheme } = useTheme()
 
   // Determine if a path is active
   const isActivePath = (path: string) => pathname === path
@@ -32,19 +135,10 @@ export default function MainLayout({ children, devices }: MainLayoutProps) {
   const isActiveExamplesPath = (slug: string) => pathname === `/examples/${slug}`
   const isExamplesPath = pathname === '/examples' || pathname.startsWith('/examples/')
 
-  // Toggle dark mode
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode)
-    document.documentElement.classList.toggle("dark")
+  // Toggle theme
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark')
   }
-
-  // Check if dark mode is preferred
-  useEffect(() => {
-    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      setIsDarkMode(true)
-      document.documentElement.classList.add("dark")
-    }
-  }, [])
 
   // Close sidebar when clicking outside
   useEffect(() => {
@@ -85,12 +179,12 @@ export default function MainLayout({ children, devices }: MainLayoutProps) {
   }))
 
   // Get examples components
-  const examplesComponents = Object.entries(components)
+  const examplesComponents = Object.entries(screens)
     .filter(([, config]) => process.env.NODE_ENV !== "production" || config.published)
     .sort((a, b) => a[1].title.localeCompare(b[1].title));
 
   return (
-    <div className={`min-h-screen flex flex-col ${isDarkMode ? "dark" : ""}`}>
+    <div className="min-h-screen flex flex-col">
       <header className="border-b bg-background">
         <div className="flex h-14 items-center px-4">
           <Button
@@ -106,8 +200,8 @@ export default function MainLayout({ children, devices }: MainLayoutProps) {
             <h1 className="text-lg font-semibold">trmnl-byos-nextjs</h1>
           </div>
           <div className="ml-auto flex items-center space-x-2">
-            <Button variant="ghost" size="icon" onClick={toggleDarkMode}>
-              {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            <Button variant="ghost" size="icon" onClick={toggleTheme}>
+              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
             <Button variant="ghost" size="icon" asChild>
               <Link href="https://github.com/ghcpuman902/byos-nextjs" target="_blank" rel="noopener noreferrer">
@@ -130,9 +224,10 @@ export default function MainLayout({ children, devices }: MainLayoutProps) {
             </Button>
           </div>
           <div className="flex-1">
-            <nav className="p-2 space-y-1">
-              <Button
-                variant="ghost"
+            <Suspense fallback={<div className="w-full h-full flex items-center justify-center">Loading...</div>}>
+              <nav className="p-2 space-y-1">
+                <Button
+                  variant="ghost"
                 className={`w-full justify-start text-sm h-9 ${isActivePath("/") ? "bg-muted" : ""}`}
                 asChild
               >
@@ -153,26 +248,12 @@ export default function MainLayout({ children, devices }: MainLayoutProps) {
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pl-6 space-y-1">
-                  {enhancedDevices.map((device) => (
-                    <Button
-                      key={device.id}
-                      variant="ghost"
-                      size="sm"
-                      className={`w-full justify-start text-sm h-8 ${isActiveDevicePath(device.friendly_id) ? "bg-muted" : ""}`}
-                      asChild
-                    >
-                      <Link href={`/device/${device.friendly_id}`}>
-                        <div className="flex items-center w-full">
-                          <span className="truncate text-xs">{device.name}</span>
-                          <StatusIndicator 
-                            status={device.status as "online" | "offline"} 
-                            size="sm" 
-                            className="ml-1" 
-                          />
-                        </div>
-                      </Link>
-                    </Button>
-                  ))}
+                  <Suspense fallback={<DeviceListFallback />}>
+                    <DeviceList 
+                      devices={enhancedDevices} 
+                      isActiveDevicePath={isActiveDevicePath} 
+                    />
+                  </Suspense>
                 </CollapsibleContent>
               </Collapsible>
 
@@ -190,30 +271,13 @@ export default function MainLayout({ children, devices }: MainLayoutProps) {
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pl-6 space-y-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={`w-full justify-start text-sm h-8 ${isActivePath("/examples") ? "bg-muted" : ""}`}
-                    asChild
-                  >
-                    <Link href="/examples">
-                      <span className="truncate text-xs">All Components</span>
-                    </Link>
-                  </Button>
-                  
-                  {examplesComponents.map(([slug, config]) => (
-                    <Button
-                      key={slug}
-                      variant="ghost"
-                      size="sm"
-                      className={`w-full justify-start text-sm h-8 ${isActiveExamplesPath(slug) ? "bg-muted" : ""}`}
-                      asChild
-                    >
-                      <Link href={`/examples/${slug}`}>
-                        <span className="truncate text-xs">{config.title}</span>
-                      </Link>
-                    </Button>
-                  ))}
+                  <Suspense fallback={<ExamplesListFallback />}>
+                    <ExamplesList 
+                      components={examplesComponents} 
+                      isActiveExamplesPath={isActiveExamplesPath}
+                      isActivePath={isActivePath}
+                    />
+                  </Suspense>
                 </CollapsibleContent>
               </Collapsible>
 
@@ -226,12 +290,15 @@ export default function MainLayout({ children, devices }: MainLayoutProps) {
                   <Server className="mr-2 h-4 w-4" />
                   System Log
                 </Link>
-              </Button>
-            </nav>
+                </Button>
+              </nav>
+            </Suspense>
           </div>
         </aside>
         <main ref={mainRef} className="flex-1">
-          {children}
+          <Suspense fallback={<MainContentFallback />}>
+            {children}
+          </Suspense>
         </main>
       </div>
     </div>

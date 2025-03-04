@@ -4,13 +4,8 @@ import { logError, logInfo } from '@/lib/logger'
 import { RefreshSchedule, TimeRange } from '@/lib/supabase/types'
 import { CustomError } from '@/lib/api/types'
 import { timezones } from '@/utils/helpers'
+import { getLocalIPAddresses } from "@/utils/helpers";
 
-// Helper function to generate a filename using friendly_id and a Base64-encoded timestamp
-const generateFilename = (friendlyId: string): string => {
-    const timestamp = Date.now().toString();
-    const base64Timestamp = Buffer.from(timestamp).toString('base64url'); // Use URL-safe Base64 encoding
-    return `${friendlyId}_${base64Timestamp}.bmp`;
-};
 
 // Helper function to pre-cache the image in the background
 const precacheImageInBackground = (imageUrl: string, deviceId: string): void => {
@@ -34,14 +29,15 @@ const precacheImageInBackground = (imageUrl: string, deviceId: string): void => 
 };
 
 // Helper to prepare for the next frame
-const prepareNextFrame = (deviceId: string): void => {
+const prepareNextFrame = (screenId: string): void => {
     // Generate a random filename for the next frame
-    const nextRandomFilename = generateFilename(deviceId);
-    const baseUrl = 'https://api.manglekuo.com/api/dashboard/bitmap';
-    const nextImageUrl = `${baseUrl}/${nextRandomFilename}`;
+    const baseUrl = process.env.NODE_ENV === 'production'
+        ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}/api/bitmap`
+        : `http://${getLocalIPAddresses()}:${process.env.PORT || 3000}/api/bitmap`;
+    const nextImageUrl = `${baseUrl}/${screenId}.bmp`;
 
     // Start pre-caching the next frame in the background
-    precacheImageInBackground(nextImageUrl, deviceId);
+    precacheImageInBackground(nextImageUrl, screenId);
 
     // Store this information for the next request if needed
     // This could be expanded to store in a cache or database if needed
@@ -49,8 +45,8 @@ const prepareNextFrame = (deviceId: string): void => {
         source: 'api/display',
         metadata: {
             next_image_url: nextImageUrl,
-            next_filename: nextRandomFilename,
-            deviceId
+            next_filename: `${screenId}.bmp`,
+            screenId
         }
     });
 };
@@ -74,7 +70,7 @@ const calculateRefreshRate = (
         hour: '2-digit',
         minute: '2-digit'
     });
-    
+
     // Format: "HH:MM" in 24-hour format
     const [{ value: hour }, , { value: minute }] = formatter.formatToParts(now);
     const currentTimeString = `${hour}:${minute}`;
@@ -217,17 +213,19 @@ export async function GET(request: Request) {
                 last_update_time: device.last_update_time,
                 next_expected_update: device.next_expected_update,
                 last_refresh_duration: device.last_refresh_duration,
+                screen: device.screen,
             }
         });
 
         // Generate a filename for the current request
-        const nextFilename = generateFilename(device.friendly_id);
-        const baseUrl = 'https://api.manglekuo.com/api/dashboard/bitmap';
-        const imageUrl = `${baseUrl}/${nextFilename}`;
+        const baseUrl = process.env.NODE_ENV === 'production'
+            ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}/api/bitmap`
+            : `http://${getLocalIPAddresses()}:${process.env.PORT || 3000}/api/bitmap`;
+        const imageUrl = `${baseUrl}/${device.screen || 'not-found'}.bmp`;
 
         // Start pre-caching the current image in the background
         // This ensures the image is cached by the time the device requests it
-        precacheImageInBackground(imageUrl, device.friendly_id);
+        precacheImageInBackground(imageUrl, device.screen || 'not-found');
 
         // Calculate the appropriate refresh rate based on time of day and device settings
         // Default refresh rate is 60 seconds (180 units)
@@ -242,12 +240,12 @@ export async function GET(request: Request) {
 
         // Update device refresh status information in the background
         // We don't await this to avoid delaying the response
-        updateDeviceRefreshStatus(device.friendly_id, dynamicRefreshRate, deviceTimezone);
+        updateDeviceRefreshStatus(device.screen || 'not-found', dynamicRefreshRate, deviceTimezone);
 
         // Prepare for the next frame in the background
         // This will generate and pre-cache the next image that will be used in the future
         setTimeout(() => {
-            prepareNextFrame(device.friendly_id);
+            prepareNextFrame(device.screen || 'not-found');
         }, 0);
 
         // Calculate human-readable next update time for logging
@@ -262,7 +260,7 @@ export async function GET(request: Request) {
                 refresh_duration_seconds: dynamicRefreshRate,
                 calculated_from_schedule: !!device.refresh_schedule,
                 next_update_expected: nextUpdateTime.toISOString(),
-                filename: nextFilename,
+                filename: `${device.screen}.bmp`,
                 special_function: "restart_playlist"
             }
         })
@@ -270,7 +268,7 @@ export async function GET(request: Request) {
         return NextResponse.json({
             status: 0,
             image_url: imageUrl,
-            filename: nextFilename,
+            filename: `${device.screen}.bmp`,
             refresh_rate: dynamicRefreshRate,
             reset_firmware: false,
             update_firmware: false,

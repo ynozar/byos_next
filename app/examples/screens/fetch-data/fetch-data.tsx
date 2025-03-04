@@ -1,55 +1,57 @@
 import { PreSatori } from "@/utils/pre-satori";
-
+import Image from "next/image";
 interface WikipediaArticleProps {
   title?: string;
   extract?: string;
   url?: string;
+  thumbnail?: {
+    source?: string;
+    width?: number;
+    height?: number;
+  };
 }
 
 export default function FetchData({
-  title="",
-  extract="",
-  url="",
+  title = "",
+  extract = "",
+  thumbnail = {
+    source: "",
+    width: 0,
+    height: 0,
+  },
 }: WikipediaArticleProps) {
 
   return (
-    <PreSatori>{(transform) => (
-      <>{transform(
-        <div className="w-[800px] h-[480px] bg-white flex flex-col rounded-lg overflow-hidden shadow-[0_0_40px_-15px_rgba(0,0,0,0.3)] border border-gray-200">
-    <div className="flex flex-col h-full overflow-hidden">
-      <div className="p-6 border-b border-gray-200">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">{title}</h1>
-        <a 
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
-          tabIndex={0}
-          aria-label={`View full article about ${title} on Wikipedia`}
-        >
-          View on Wikipedia
-          <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            className="h-4 w-4 ml-1" 
-            fill="none" 
-            viewBox="0 0 24 24" 
-            stroke="currentColor"
-          >
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={2} 
-              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" 
-            />
-          </svg>
-        </a>
-      </div>
-      <div className="p-6 overflow-y-auto flex-grow">
-        <p className="text-gray-700 leading-relaxed">{extract}</p>
-      </div>
-    </div>
+    <PreSatori>{(transform) => (<>{transform(
+      <div className="flex flex-col w-[800px] h-[480px] bg-white">
+        <div className="px-4 border-b border-black">
+          <h1 className="text-2xl font-bold text-black">{title}</h1>
         </div>
-      )}</>
-    )}</PreSatori>
+        <div className="flex flex-1 overflow-hidden">
+          <div className="p-4 overflow-y-auto flex-1">
+            {thumbnail.source?.startsWith("https://") && (
+              <div className="float-right mr-2">
+                <picture>
+                  <source srcSet={thumbnail.source} type="image/webp" />
+                  <img 
+                    src={thumbnail.source} 
+                    alt={title} 
+                    width={thumbnail.width} 
+                    height={thumbnail.height} 
+                  style={{
+                    width: '300px',
+                    height: thumbnail.height && thumbnail.width ? Math.round(thumbnail.height * (300 / thumbnail.width)) + 'px' : 'auto',
+                    maxWidth: '300px',
+                    filter: 'contrast(1.6) saturate(0) brightness(0.8)',
+                  }}
+                />
+                </picture>
+              </div>
+            )}
+            <p className="text-black leading-relaxed text-base">{extract}</p>
+          </div>
+        </div>
+      </div>
+    )}</>)}</PreSatori>
   );
 } 

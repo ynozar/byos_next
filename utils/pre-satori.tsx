@@ -131,12 +131,9 @@ export const PreSatori: React.FC<PreSatoriProps> = ({ children, ...props }) => {
             
             // Process className for dither patterns
             if (className) {
-                // Keep the original className for non-Satori rendering
-                newProps.tw = className;
-                
+                let remainingClassName = [];
                 // Extract dither classes
                 const classes = className.split(' ');
-                
                 // Check for dither classes and apply their styles
                 for (const cls of classes) {
                     if (cls === 'dither' || cls.startsWith('dither-')) {
@@ -146,11 +143,14 @@ export const PreSatori: React.FC<PreSatoriProps> = ({ children, ...props }) => {
                                 ...newStyle,
                                 ...ditherPatterns[cls]
                             };
-                            // Remove the dither class from the className
-                            newProps.className = newProps.className.replace(cls, '').trim();
                         }
+                    } else {
+                        // Keep the remaining className for non-Satori rendering
+                        remainingClassName.push(cls);
                     }
                 }
+                // Keep the remaining className for non-Satori rendering
+                newProps.tw = remainingClassName.join(' ');
             }
             
             // Apply the combined styles

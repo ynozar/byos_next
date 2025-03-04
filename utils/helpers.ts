@@ -1,6 +1,28 @@
 import type { Device, Log } from "@/lib/supabase/types"
 import crypto from "crypto"
 
+import { networkInterfaces } from "os";
+
+export function getLocalIPAddresses() {
+  const nets = networkInterfaces();
+  const results: { [key: string]: string[] } = Object.create(null);
+
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name] || []) {
+      const familyV4Value = typeof net.family === 'string' ? 'IPv4' : 4;
+      if (net.family === familyV4Value && !net.internal) {
+        if (!results[name]) {
+          results[name] = [];
+        }
+        results[name].push(net.address);
+      }
+    }
+  }
+
+  // Return the first found non-internal IPv4 address
+  return results[Object.keys(results)[0]]?.[0] || 'No IP found';
+};
+
 // Format date to a readable format
 export function formatDate(dateString: string | null): string {
   if (!dateString) return "Never";

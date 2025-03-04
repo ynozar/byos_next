@@ -1,14 +1,14 @@
+export const revalidate = 60
+
+import { unstable_cacheLife as cacheLife } from 'next/cache';
+
 import { ImageResponse } from 'next/og'
-// import { BitmapGreeting } from '@/app/screens/BitmapGreeting'
-// import { BitmapPatterns } from '@/app/screens/BitmapPatterns'
-// import { TailwindTest } from '@/app/screens/tailwindTest'
 import fs from 'fs'
 import path from 'path'
-import SimpleText from '@/app/examples/screens/simple-text/simple-text'
 import { createElement } from 'react'
 import { renderBmp } from '@/utils/render-bmp'
-
-export const revalidate = 60 // 1 minute
+import NotFoundScreen from '@/app/examples/screens/not-found/not-found'
+import screens from '@/app/examples/screens.json'
 
 let blockKieFont: Buffer | null = null
 
@@ -38,43 +38,75 @@ const santoriOptions = {
     debug: false, // this draws boundary lines around the text, no need for it!
 }
 
+// Helper function to load a screen component
+async function loadScreenBuffer(screenId: string) {
+    'use cache'
+    cacheLife('minutes')
+    try {
+        // Check if the screen exists in our components registry
+        let element
+        if (screens[screenId as keyof typeof screens]) {
+            const { default: Component } = await import(
+                `@/app/examples/screens/${screenId}/${screenId}.tsx`
+            )
+            console.log(`Screen component loaded: ${screenId}`)
+            let props = screens[screenId as keyof typeof screens].props || {};
+            if (screens[screenId as keyof typeof screens].hasDataFetch) {
+                try {
+                    const { default: fetchDataFunction } = await import(
+                        `@/app/examples/screens/${screenId}/getData.ts`
+                    );
+                    props = await fetchDataFunction();
+                } catch (error) {
+                    console.warn(`Error fetching data for ${screenId}:`, error);
+                }
+            }
+            element = createElement(Component, { ...props })
+        } else {
+            // If screen component not found, use the NotFoundScreen
+            element = createElement(NotFoundScreen, { slug: screenId })
+        }
 
+        const pngResponse = await new ImageResponse(element, santoriOptions)
 
-
-
-
-
-
+        return await renderBmp(pngResponse)
+    } catch (error) {
+        console.error(`Error loading screen component ${screenId}:`, error)
+        return null
+    }
+}
 
 export async function generateStaticParams() {
-    return [
-        { slug: ['t.bmp'] },
-    ]
+    return Object.keys(screens).map((screen) => ({
+        slug: [screen],
+    }))
 }
 
 type Params = Promise<{ slug?: string[] }>
 
-
-
 export async function GET(req: Request, segmentData: { params: Params }) {
     try {
-        const slug = (await segmentData.params)?.slug || 'default'
-        const path = Array.isArray(slug) ? slug.join(' ') : slug
-        const shouldConvertToBmp = typeof path === 'string' && path.toLowerCase().endsWith('.bmp')
+        const slug = (await segmentData.params)?.slug || ['default']
 
+        // Extract the screen slug from the URL
+        // Format: [screen_slug].bmp
+        const screenSlug = (Array.isArray(slug) ? slug[slug.length - 1] : slug).replace('.bmp', '')
 
-        const element = createElement(SimpleText);
+        // Default to 'simple-text' if no screen is specified
+        let screenId = 'simple-text'
 
-        const pngResponse = await new ImageResponse( element, santoriOptions)
-
-        // Return PNG if not requesting BMP
-        if (!shouldConvertToBmp) {
-            return pngResponse
+        // Check if the requested screen exists in our screens registry
+        if (screens[screenSlug as keyof typeof screens]) {
+            screenId = screenSlug
+            console.log(`Screen found: ${screenSlug}`)
+        } else {
+            console.log(`Screen not found: ${screenSlug}, using default`)
         }
 
-        const buffer = await renderBmp(pngResponse)
+        // Try to load the screen component
+        const screenBuffer = await loadScreenBuffer(screenId)
 
-        return new Response(buffer, {
+        return new Response(screenBuffer, {
             headers: {
                 'content-type': 'image/bmp',
             }
@@ -82,11 +114,35 @@ export async function GET(req: Request, segmentData: { params: Params }) {
 
     } catch (error) {
         console.error('Error generating image:', error)
-        return new Response('Error generating image', {
-            status: 500,
-            headers: {
-                'content-type': 'text/plain',
+
+        // Instead of returning an error, return the NotFoundScreen as a fallback
+        try {
+            const element = createElement(NotFoundScreen, { slug: 'Error occurred' })
+            const pngResponse = await new ImageResponse(element, santoriOptions)
+
+            // Check if BMP was requested
+            const slug = (await segmentData.params)?.slug || ['default']
+            const path = Array.isArray(slug) ? slug.join('/') : slug
+            const shouldConvertToBmp = typeof path === 'string' && path.toLowerCase().endsWith('.bmp')
+
+            if (!shouldConvertToBmp) {
+                return pngResponse
             }
-        })
+
+            const buffer = await renderBmp(pngResponse)
+            return new Response(buffer, {
+                headers: {
+                    'content-type': 'image/bmp',
+                }
+            })
+        } catch (fallbackError) {
+            console.error('Error generating fallback image:', fallbackError)
+            return new Response('Error generating image', {
+                status: 500,
+                headers: {
+                    'content-type': 'text/plain',
+                }
+            })
+        }
     }
 }

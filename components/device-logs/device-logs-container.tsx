@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import DeviceLogsViewer from "./device-logs-viewer"
 import SystemLogsViewer from "@/components/system-logs/system-logs-viewer"
-import { fetchDeviceSystemLogs } from "@/app/actions/system-logs-actions"
+import { fetchDeviceSystemLogs } from "@/app/actions/system"
 import type { Device } from "@/lib/supabase/types"
 
 interface DeviceLogsContainerProps {

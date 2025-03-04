@@ -175,9 +175,9 @@ To set up your own screen example, you can use the following structure:
 
 1. Create your component folder in the `app/examples/screens` directory following any of the existing examples.
 2. Add your component and data fetching logic
-3. Add an entry to `app/examples/components.json`
+3. Add an entry to `app/examples/screens.json`
 
-Each screen is defined in `app/examples/components.json` and can be accessed via its slug.
+Each screen is defined in `app/examples/screens.json` and can be accessed via its slug.
 
 This allows you to code and preview before pointing your device to any of the screens.
 
