@@ -1,7 +1,5 @@
 export const revalidate = 60
 
-import { unstable_cacheLife as cacheLife } from 'next/cache';
-
 import { ImageResponse } from 'next/og'
 import fs from 'fs'
 import path from 'path'
@@ -40,8 +38,6 @@ const santoriOptions = {
 
 // Helper function to load a screen component
 async function loadScreenBuffer(screenId: string) {
-    'use cache'
-    cacheLife('minutes')
     try {
         // Check if the screen exists in our components registry
         let element
@@ -77,16 +73,21 @@ async function loadScreenBuffer(screenId: string) {
 }
 
 export async function generateStaticParams() {
-    return Object.keys(screens).map((screen) => ({
-        slug: [screen],
-    }))
+    return [
+        ...Object.keys(screens).map((screen) => ({
+            slug: [screen + '.bmp'],
+        })),
+        ...Object.keys(screens).map((screen) => ({
+            slug: [screen],
+        }))
+    ];
 }
 
 type Params = Promise<{ slug?: string[] }>
 
 export async function GET(req: Request, segmentData: { params: Params }) {
     try {
-        const slug = (await segmentData.params)?.slug || ['default']
+        const slug = (await segmentData.params)?.slug || ['not-found']
 
         // Extract the screen slug from the URL
         // Format: [screen_slug].bmp
@@ -119,16 +120,6 @@ export async function GET(req: Request, segmentData: { params: Params }) {
         try {
             const element = createElement(NotFoundScreen, { slug: 'Error occurred' })
             const pngResponse = await new ImageResponse(element, santoriOptions)
-
-            // Check if BMP was requested
-            const slug = (await segmentData.params)?.slug || ['default']
-            const path = Array.isArray(slug) ? slug.join('/') : slug
-            const shouldConvertToBmp = typeof path === 'string' && path.toLowerCase().endsWith('.bmp')
-
-            if (!shouldConvertToBmp) {
-                return pngResponse
-            }
-
             const buffer = await renderBmp(pngResponse)
             return new Response(buffer, {
                 headers: {

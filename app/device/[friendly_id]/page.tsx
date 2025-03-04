@@ -566,7 +566,7 @@ export default function DevicePage() {
                             </div>
                             <div className="w-full max-w-3xl">
                                 <AspectRatio ratio={16 / 9}>
-                                    <Image src={`/api/bitmap/${editedDevice?.screen || 'simple-text'}.bmp`} alt="Device Screen" fill className="object-cover rounded-xs ring-2 ring-gray-200" style={{ imageRendering: 'pixelated' }} />
+                                    <Image src={`/api/bitmap/${editedDevice?.screen || 'simple-text'}.bmp`} overrideSrc={`/api/bitmap/${editedDevice?.screen || 'simple-text'}.bmp`} alt="Device Screen" fill className="object-cover rounded-xs ring-2 ring-gray-200" style={{ imageRendering: 'pixelated' }} unoptimized />
                                 </AspectRatio>
                             </div>
                         </CardContent>
@@ -626,7 +626,7 @@ export default function DevicePage() {
                         </div>
                         <div className="w-full max-w-3xl">
                             <AspectRatio ratio={16 / 9}>
-                                <Image src={`/api/bitmap/${device?.screen}.bmp`} alt="Device Screen" fill className="object-cover rounded-xs ring-2 ring-gray-200" style={{ imageRendering: 'pixelated' }} />
+                                <Image src={`/api/bitmap/${device?.screen}.bmp`} overrideSrc={`/api/bitmap/${device?.screen}.bmp`} alt="Device Screen" fill className="object-cover rounded-xs ring-2 ring-gray-200" style={{ imageRendering: 'pixelated' }} unoptimized />
                             </AspectRatio>
                             <p className="text-sm text-muted-foreground">{device?.screen}</p>
                         </div>

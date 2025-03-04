@@ -1,4 +1,4 @@
-import { unstable_cacheTag as cacheTag } from 'next/cache'
+import { unstable_cache } from 'next/cache';
 
 interface WikipediaData {
   title: string;
@@ -17,44 +17,31 @@ interface WikipediaData {
   description?: string;
 }
 
-// Maximum number of retries to prevent infinite recursion
-const MAX_RETRIES = 3;
+/**
+ * Helper function to get a random fallback article
+ */
+function getFallbackArticle(): string {
+  const fallbackArticles = [
+    "Electronic_paper",
+    "Internet_of_things",
+    "Computer_terminal",
+    "London_Underground",
+    "Wikipedia",
+  ];
+  return fallbackArticles[Math.floor(Math.random() * fallbackArticles.length)];
+}
 
 /**
- * Internal recursive function to fetch Wikipedia data
+ * Internal function to fetch and process Wikipedia data
  */
-async function fetchWikipediaData(retryCount = 0): Promise<WikipediaData | string> {  
-  if (retryCount >= MAX_RETRIES) {
-    // Try to get a fallback article
-    try {
-      const fallbackArticle = getFallbackArticle();
-      const fallbackResponse = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${fallbackArticle}`, {
-        headers: {
-          Accept: "application/json",
-          "Api-User-Agent": "NextJS-Wikipedia-Display/1.0",
-        },
-        cache: 'no-store',
-      });
-
-      if (!fallbackResponse.ok) {
-        throw new Error("Fallback article fetch failed");
-      }
-
-      return fallbackResponse.json();
-    } catch (fallbackError) {
-      console.log("Fallback error details:", fallbackError);
-      // Return error message instead of static fallback
-      return "Error: Unable to fetch fallback article.";
-    }
-  }
+async function getWikipediaArticle(): Promise<WikipediaData | string> {
   try {
-    // First try to get a featured article
+    // Try to get a random article
     const response = await fetch("https://en.wikipedia.org/api/rest_v1/page/random/summary", {
       headers: {
         Accept: "application/json",
         "Api-User-Agent": "NextJS-Wikipedia-Display/1.0",
       },
-      // Add cache: 'no-store' to prevent caching issues
       cache: 'no-store',
     });
 
@@ -74,12 +61,38 @@ async function fetchWikipediaData(retryCount = 0): Promise<WikipediaData | strin
           data.description.includes("footballer") ||
           data.description.includes("politician")))
     ) {
-      // If not interesting enough, try again with incremented retry count
-      return fetchWikipediaData(retryCount + 1);
+      // If not interesting enough, use a fallback article
+      try {
+        const fallbackArticle = getFallbackArticle();
+        const fallbackResponse = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${fallbackArticle}`, {
+          headers: {
+            Accept: "application/json",
+            "Api-User-Agent": "NextJS-Wikipedia-Display/1.0",
+          }
+        });
+
+        if (!fallbackResponse.ok) {
+          throw new Error("Fallback article fetch failed");
+        }
+
+        const fallbackData = await fallbackResponse.json();
+        
+        return {
+          title: fallbackData.title,
+          extract: fallbackData.extract,
+          thumbnail: fallbackData.thumbnail || null,
+          content_urls: fallbackData.content_urls,
+          description: fallbackData.description,
+          type: fallbackData.type,
+        };
+      } catch (fallbackError) {
+        console.log("Fallback error details:", fallbackError);
+        return "Error: Unable to fetch Wikipedia data.";
+      }
     }
 
     // Include additional fun data and cover image
-    const enhancedData = {
+    return {
       title: data.title,
       extract: data.extract,
       thumbnail: data.thumbnail ? data.thumbnail : null, // Cover image
@@ -87,8 +100,6 @@ async function fetchWikipediaData(retryCount = 0): Promise<WikipediaData | strin
       description: data.description,
       type: data.type,
     };
-
-    return enhancedData; // Return the enhanced data
   } catch (error) {
     console.error("Error details:", error);
     return "Error: Unable to fetch Wikipedia data.";
@@ -96,22 +107,15 @@ async function fetchWikipediaData(retryCount = 0): Promise<WikipediaData | strin
 }
 
 /**
- * Exported function that serves as the entry point for fetching Wikipedia data
+ * Cached function that serves as the entry point for fetching Wikipedia data
  */
-export default async function fetchData(): Promise<WikipediaData | string> {
-  'use cache' // reduce server load by caching success result for 15min, see https://nextjs.org/docs/app/api-reference/directives/use-cache
-  cacheTag('fetch-data') // match the slug in the @app/examples/screens.json
-  return fetchWikipediaData(0);
-}
-
-// Helper function to get a random fallback article
-function getFallbackArticle(): string {
-  const fallbackArticles = [
-    "Electronic_paper",
-    "Internet_of_things",
-    "Computer_terminal",
-    "London_Underground",
-    "Wikipedia",
-  ];
-  return fallbackArticles[Math.floor(Math.random() * fallbackArticles.length)];
-}
+export default unstable_cache(
+  async (): Promise<WikipediaData | string> => {
+    return getWikipediaArticle();
+  },
+  ['wikipedia-random-article'],
+  { 
+    tags: ['wikipedia'],
+    revalidate: 600 // Cache for 10 minutes
+  }
+);

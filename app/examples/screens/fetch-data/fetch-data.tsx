@@ -31,6 +31,7 @@ export default function FetchData({
             {thumbnail.source?.startsWith("https://") && (
               <div className="float-right mr-2">
                 <picture>
+                  {/* YOU CANNOT USE NEXTJS IMAGE COMPONENT HERE, BECAUSE SATORI DOES NOT SUPPORT IT */}
                   <source srcSet={thumbnail.source} type="image/webp" />
                   <img 
                     src={thumbnail.source} 
