@@ -299,26 +299,26 @@ export async function GET(request: Request) {
         // Calculate human-readable next update time for logging
         const nextUpdateTime = new Date(Date.now() + (dynamicRefreshRate * 1000));
 
-        const base64Timestamp = Buffer.from(Date.now().toString()).toString('base64');
+        const base64Timestamp = Buffer.from(Date.now().toString()).toString('base64').slice(0, 5);
 
         logInfo('Display request successful', {
             source: 'api/display',
             metadata: {
-                image_url: imageUrl+`?t=${base64Timestamp}`, // Add a timestamp to the image URL to stop device from caching the image,
+                image_url: imageUrl, 
                 friendly_id: device.friendly_id,
                 refresh_rate: dynamicRefreshRate,
                 refresh_duration_seconds: dynamicRefreshRate,
                 calculated_from_schedule: !!device.refresh_schedule,
                 next_update_expected: nextUpdateTime.toISOString(),
-                filename: `${device.screen}_${base64Timestamp}.bmp`,
+                filename: `${device.screen}_${base64Timestamp}.bmp`, // Add a timestamp to the image filename to stop device from caching the image
                 special_function: "restart_playlist"
             }
         })
 
         return NextResponse.json({
             status: 0,
-            image_url: imageUrl+`?t=${base64Timestamp}`, // Add a timestamp to the image URL to stop device from caching the image,
-            filename: `${device.screen}_${base64Timestamp}.bmp`,
+            image_url: imageUrl, 
+            filename: `${device.screen}_${base64Timestamp}.bmp`, // Add a timestamp to the image filename to stop device from caching the image
             refresh_rate: dynamicRefreshRate,
             reset_firmware: false,
             update_firmware: false,
