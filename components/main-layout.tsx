@@ -16,30 +16,69 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 // Loading fallbacks for different sections
 const DeviceListFallback = () => (
-  <div className="pl-6 space-y-1">
-    {[1, 2, 3].map((i) => (
+  <div className="pl-6 space-y-2">
+    {[1, 2, 3, 4].map((i) => (
       <div key={i} className="flex items-center w-full py-1">
-        <Skeleton className="h-6 w-full" />
+        <div className="w-full flex items-center">
+          <Skeleton className="h-5 w-[85%] rounded-md" />
+          <Skeleton className="h-3 w-3 ml-2 rounded-full" />
+        </div>
       </div>
     ))}
   </div>
 )
 
 const ExamplesListFallback = () => (
-  <div className="pl-6 space-y-1">
+  <div className="pl-6 space-y-2">
+    <div className="flex items-center w-full py-1">
+      <Skeleton className="h-5 w-[70%] rounded-md" />
+    </div>
     {[1, 2, 3, 4].map((i) => (
       <div key={i} className="flex items-center w-full py-1">
-        <Skeleton className="h-6 w-full" />
+        <Skeleton className="h-5 w-[85%] rounded-md" />
       </div>
     ))}
   </div>
 )
 
-const MainContentFallback = () => (
-  <div className="p-6 space-y-4">
-    <Skeleton className="h-8 w-1/3" />
-    <Skeleton className="h-32 w-full" />
-    <Skeleton className="h-32 w-full" />
+// Main navigation skeleton for the entire sidebar
+const SidebarSkeletonFallback = () => (
+  <div className="p-2 space-y-2">
+    {/* Overview button */}
+    <div className="w-full h-9 flex items-center">
+      <Skeleton className="h-4 w-4 mr-2 rounded-md" />
+      <Skeleton className="h-5 w-24 rounded-md" />
+    </div>
+    
+    {/* Devices section */}
+    <div className="w-full h-9 flex items-center justify-between">
+      <div className="flex items-center">
+        <Skeleton className="h-4 w-4 mr-2 rounded-md" />
+        <Skeleton className="h-5 w-20 rounded-md" />
+      </div>
+      <Skeleton className="h-4 w-4 rounded-md" />
+    </div>
+    
+    {/* Examples section */}
+    <div className="w-full h-9 flex items-center justify-between">
+      <div className="flex items-center">
+        <Skeleton className="h-4 w-4 mr-2 rounded-md" />
+        <Skeleton className="h-5 w-24 rounded-md" />
+      </div>
+      <Skeleton className="h-4 w-4 rounded-md" />
+    </div>
+    
+    {/* System Log button */}
+    <div className="w-full h-9 flex items-center">
+      <Skeleton className="h-4 w-4 mr-2 rounded-md" />
+      <Skeleton className="h-5 w-28 rounded-md" />
+    </div>
+    
+    {/* Maintenance button */}
+    <div className="w-full h-9 flex items-center">
+      <Skeleton className="h-4 w-4 mr-2 rounded-md" />
+      <Skeleton className="h-5 w-28 rounded-md" />
+    </div>
   </div>
 )
 
@@ -193,7 +232,7 @@ export default function MainLayout({ children, devicesPromise }: MainLayoutProps
             className="mr-2 md:hidden"
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="size-5" />
             <span className="sr-only">Toggle Menu</span>
           </Button>
           <div className="flex items-center gap-2">
@@ -201,11 +240,11 @@ export default function MainLayout({ children, devicesPromise }: MainLayoutProps
           </div>
           <div className="ml-auto flex items-center space-x-2">
             <Button variant="ghost" size="icon" onClick={toggleTheme}>
-              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              <Sun className="size-5 dark:hidden" /> <Moon className="size-5 hidden dark:block" />
             </Button>
             <Button variant="ghost" size="icon" asChild>
               <Link href="https://github.com/ghcpuman902/byos-nextjs" target="_blank" rel="noopener noreferrer">
-                <Github className="h-5 w-5" />
+                <Github className="size-5" />
               </Link>
             </Button>
           </div>
@@ -220,11 +259,11 @@ export default function MainLayout({ children, devicesPromise }: MainLayoutProps
         >
           <div className="md:hidden flex justify-end p-2">
             <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(false)}>
-              <X className="h-5 w-5" />
+              <X className="size-5" />
             </Button>
           </div>
           <div className="flex-1">
-            <Suspense fallback={<div className="w-full h-full flex items-center justify-center">Loading...</div>}>
+            <Suspense fallback={<SidebarSkeletonFallback />}>
               <nav className="p-2 space-y-1">
                 <Button
                   variant="ghost"
@@ -307,9 +346,7 @@ export default function MainLayout({ children, devicesPromise }: MainLayoutProps
           </div>
         </aside>
         <main ref={mainRef} className="flex-1">
-          <Suspense fallback={<MainContentFallback />}>
             {children}
-          </Suspense>
         </main>
       </div>
     </div>

@@ -21,7 +21,7 @@
     "published": true,
     "createdAt": "2024-03-03T00:00:00Z",
     "updatedAt": "2024-03-03T00:00:00Z",
-    "description": "Demonstrating using custom classes to create bitmap patterns. See /utils/pre-satori.ts for more details. Edit this screen at /app/screens/BitmapPatterns.tsx",
+    "description": "Demonstrating using custom classes to create bitmap patterns. See /utils/pre-satori.ts for more details. Edit this screen at /app/screens/bitmap-patterns.tsx",
     "componentPath": "./screens/bitmap-patterns",
     "hasDataFetch": false,
     "props": {},

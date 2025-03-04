@@ -313,9 +313,10 @@ export async function GET(request: Request) {
             }
         })
 
+        const base64Timestamp = Buffer.from(Date.now().toString()).toString('base64');
         return NextResponse.json({
             status: 0,
-            image_url: imageUrl,
+            image_url: imageUrl+`?t=${base64Timestamp}`, // Add a timestamp to the image URL to stop device from caching the image,
             filename: `${device.screen}.bmp`,
             refresh_rate: dynamicRefreshRate,
             reset_firmware: false,
