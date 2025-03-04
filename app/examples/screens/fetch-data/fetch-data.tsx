@@ -1,5 +1,4 @@
 import { PreSatori } from "@/utils/pre-satori";
-import Image from "next/image";
 interface WikipediaArticleProps {
   title?: string;
   extract?: string;
