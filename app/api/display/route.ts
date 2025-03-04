@@ -100,7 +100,7 @@ const isTimeInRange = (timeToCheck: string, startTime: string, endTime: string):
 
 // Helper function to update device refresh status information
 const updateDeviceRefreshStatus = async (
-    deviceId: string,
+    friendlyId: string,
     refreshDurationSeconds: number,
     timezone: string = 'UTC'
 ): Promise<void> => {
@@ -116,13 +116,13 @@ const updateDeviceRefreshStatus = async (
                 next_expected_update: nextExpectedUpdate.toISOString(),
                 last_refresh_duration: Math.round(refreshDurationSeconds)
             })
-            .eq('friendly_id', deviceId);
+            .eq('friendly_id', friendlyId);
 
         if (error) {
             logError(error, {
                 source: 'api/display/updateDeviceRefreshStatus',
                 metadata: {
-                    deviceId,
+                    friendlyId,
                     refreshDurationSeconds,
                     timezone,
                     last_update_time: now.toISOString(),
@@ -133,7 +133,7 @@ const updateDeviceRefreshStatus = async (
     } catch (error) {
         logError(error as Error, {
             source: 'api/display/updateDeviceRefreshStatus',
-            metadata: { deviceId, refreshDurationSeconds, timezone }
+            metadata: { friendlyId, refreshDurationSeconds, timezone }
         });
     }
 };
@@ -240,7 +240,7 @@ export async function GET(request: Request) {
 
         // Update device refresh status information in the background
         // We don't await this to avoid delaying the response
-        updateDeviceRefreshStatus(device.screen || 'not-found', dynamicRefreshRate, deviceTimezone);
+        updateDeviceRefreshStatus(device.friendly_id, dynamicRefreshRate, deviceTimezone);
 
         // Prepare for the next frame in the background
         // This will generate and pre-cache the next image that will be used in the future
