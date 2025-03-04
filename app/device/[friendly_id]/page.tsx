@@ -7,7 +7,7 @@ import { RefreshCw, Save, X, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import type { Device } from "@/lib/supabase/types"
-import { getDeviceStatus, formatDate } from "@/utils/helpers"
+import { getDeviceStatus, formatDate, estimateBatteryLife } from "@/utils/helpers"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -312,6 +312,40 @@ export default function DevicePage() {
         })
     }
 
+    // Calculate refresh per day based on refresh schedule
+    const calculateRefreshPerDay = (device: Device & { status?: string; type?: string } | null): number => {
+        if (!device || !device.refresh_schedule) return 0;
+
+        // Default refresh rate in seconds
+        const defaultRefreshRate = device.refresh_schedule.default_refresh_rate || 300;
+
+        // Calculate refreshes per day from default rate
+        let refreshesPerDay = 24 * 60 * 60 / defaultRefreshRate;
+
+        // Adjust for time ranges if they exist
+        if (device.refresh_schedule.time_ranges && device.refresh_schedule.time_ranges.length > 0) {
+            // This is a simplified calculation - a more accurate one would account for overlapping ranges
+            device.refresh_schedule.time_ranges.forEach(range => {
+                // Parse start and end times
+                const [startHour, startMinute] = range.start_time.split(':').map(Number);
+                const [endHour, endMinute] = range.end_time.split(':').map(Number);
+
+                // Calculate duration in hours
+                const startTimeInMinutes = startHour * 60 + startMinute;
+                const endTimeInMinutes = endHour * 60 + endMinute;
+                const durationInHours = (endTimeInMinutes - startTimeInMinutes) / 60;
+
+                // Calculate refreshes during this time range
+                const rangeRefreshes = durationInHours * 60 * 60 / range.refresh_rate;
+
+                // Subtract default refreshes during this period and add custom refreshes
+                refreshesPerDay = refreshesPerDay - (durationInHours * 60 * 60 / defaultRefreshRate) + rangeRefreshes;
+            });
+        }
+
+        return Math.max(0, refreshesPerDay);
+    };
+
     if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -498,36 +532,6 @@ export default function DevicePage() {
                                         onChange={handleInputChange}
                                     />
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="battery_voltage">Battery Voltage (V)</Label>
-                                    <Input
-                                        id="battery_voltage"
-                                        name="battery_voltage"
-                                        type="number"
-                                        step="0.01"
-                                        value={editedDevice?.battery_voltage || ""}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="firmware_version">Firmware Version</Label>
-                                    <Input
-                                        id="firmware_version"
-                                        name="firmware_version"
-                                        value={editedDevice?.firmware_version || ""}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="rssi">WiFi Signal Strength (dBm)</Label>
-                                    <Input
-                                        id="rssi"
-                                        name="rssi"
-                                        type="number"
-                                        value={editedDevice?.rssi || ""}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
                             </div>
 
                             <div className="border-t pt-4 mt-4">
@@ -628,89 +632,121 @@ export default function DevicePage() {
                     </form>
                 </Card>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-base">Device Information</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <dl className="space-y-4">
-                                <div>
-                                    <dt className="text-sm font-medium text-muted-foreground">Name</dt>
-                                    <dd className="text-sm">{device.name}</dd>
-                                </div>
-                                <div>
-                                    <dt className="text-sm font-medium text-muted-foreground">Friendly ID</dt>
-                                    <dd className="text-sm font-mono">{device.friendly_id}</dd>
-                                </div>
-                                <div>
-                                    <dt className="text-sm font-medium text-muted-foreground">MAC Address</dt>
-                                    <dd className="text-sm">{device.mac_address}</dd>
-                                </div>
-                                <div>
-                                    <dt className="text-sm font-medium text-muted-foreground">Timezone</dt>
-                                    <dd className="text-sm">{formatTimezone(device.timezone)}</dd>
-                                </div>
-                                <div>
-                                    <dt className="text-sm font-medium text-muted-foreground">Last Update</dt>
-                                    <dd className="text-sm">
-                                        {device.last_update_time
-                                            ? formatDate(device.last_update_time)
-                                            : "Never"}
-                                    </dd>
-                                </div>
-                            </dl>
-                        </CardContent>
-                    </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-base">Device Information</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <dl className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div>
+                                <dt className="text-sm font-medium text-muted-foreground">Name</dt>
+                                <dd className="text-sm">{device.name}</dd>
+                            </div>
+                            <div>
+                                <dt className="text-sm font-medium text-muted-foreground">Friendly ID</dt>
+                                <dd className="text-sm font-mono">{device.friendly_id}</dd>
+                            </div>
+                            <div>
+                                <dt className="text-sm font-medium text-muted-foreground">MAC Address</dt>
+                                <dd className="text-sm">{device.mac_address}</dd>
+                            </div>
+                            <div>
+                                <dt className="text-sm font-medium text-muted-foreground">Timezone</dt>
+                                <dd className="text-sm">{formatTimezone(device.timezone)}</dd>
+                            </div>
+                            <div>
+                                <dt className="text-sm font-medium text-muted-foreground">Last Update</dt>
+                                <dd className="text-sm">
+                                    {device.last_update_time
+                                        ? formatDate(device.last_update_time)
+                                        : "Never"}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt className="text-sm font-medium text-muted-foreground">Firmware Version</dt>
+                                <dd className="text-sm">
+                                    {device.firmware_version || "Unknown"}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt className="text-sm font-medium text-muted-foreground">WiFi Signal Strength</dt>
+                                <dd className="text-sm">
+                                    {device.rssi
+                                        ? `${device.rssi} dBm (${getSignalQuality(device.rssi)})`
+                                        : "Unknown"}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt className="text-sm font-medium text-muted-foreground">Last Refresh Duration</dt>
+                                <dd className="text-sm">
+                                    {device.last_refresh_duration
+                                        ? `${device.last_refresh_duration} seconds`
+                                        : "Unknown"}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt className="text-sm font-medium text-muted-foreground">Next Expected Update</dt>
+                                <dd className="text-sm">
+                                    {device.next_expected_update
+                                        ? formatDate(device.next_expected_update)
+                                        : "Unknown"}
+                                </dd>
+                            </div>
+                            {device.battery_voltage && (
+                                <div className="col-span-1 md:col-span-2 lg:col-span-3">
+                                    <dt className="text-sm font-medium text-muted-foreground">Battery Status</dt>
+                                    <dd className="mt-1">
+                                        {(() => {
+                                            const refreshPerDay = calculateRefreshPerDay(device);
+                                            const batteryEstimate = estimateBatteryLife(device.battery_voltage, refreshPerDay);
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-base">Device Status</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <dl className="space-y-4">
-                                <div>
-                                    <dt className="text-sm font-medium text-muted-foreground">Battery Voltage</dt>
-                                    <dd className="text-sm">
-                                        {device.battery_voltage 
-                                            ? `${device.battery_voltage.toFixed(2)}V` 
-                                            : "Unknown"}
+                                            // Determine color based on battery percentage
+                                            let batteryColor = "bg-green-500";
+                                            if (batteryEstimate.batteryPercentage < 20) {
+                                                batteryColor = "bg-red-500";
+                                            } else if (batteryEstimate.batteryPercentage < 50) {
+                                                batteryColor = "bg-yellow-500";
+                                            }
+
+                                            return (
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="flex items-center">
+                                                            <div className="relative w-12 h-6 border border-primary rounded-md overflow-hidden">
+                                                                <div
+                                                                    className={`h-full transition-all duration-300 ease-in-out ${batteryColor}`}
+                                                                    style={{
+                                                                        width: `${batteryEstimate.batteryPercentage}%`,
+                                                                    }}
+                                                                ></div>
+
+                                                                <div className="absolute inset-0 flex items-center justify-center text-xs">{batteryEstimate.batteryPercentage}%</div>
+                                                            </div>
+                                                            {/* positive end of the battery */}
+                                                            <div className="ml-[1px] h-3 w-1 bg-primary rounded-r-sm"></div> 
+                                                        </div>
+                                                        <span className="text-sm font-medium">
+                                                            {device.battery_voltage.toFixed(2)}V
+                                                        </span>
+                                                        <span className="text-xs text-muted-foreground">
+                                                            (~{batteryEstimate.remainingDays} days remaining based on {refreshPerDay} refreshes per day)
+                                                        </span>
+                                                    </div>
+
+                                                </div>
+                                            );
+                                        })()}
                                     </dd>
                                 </div>
-                                <div>
-                                    <dt className="text-sm font-medium text-muted-foreground">Firmware Version</dt>
-                                    <dd className="text-sm">
-                                        {device.firmware_version || "Unknown"}
-                                    </dd>
-                                </div>
-                                <div>
-                                    <dt className="text-sm font-medium text-muted-foreground">WiFi Signal Strength</dt>
-                                    <dd className="text-sm">
-                                        {device.rssi 
-                                            ? `${device.rssi} dBm (${getSignalQuality(device.rssi)})` 
-                                            : "Unknown"}
-                                    </dd>
-                                </div>
-                                <div>
-                                    <dt className="text-sm font-medium text-muted-foreground">Last Refresh Duration</dt>
-                                    <dd className="text-sm">
-                                        {device.last_refresh_duration 
-                                            ? `${device.last_refresh_duration} seconds` 
-                                            : "Unknown"}
-                                    </dd>
-                                </div>
-                                <div>
-                                    <dt className="text-sm font-medium text-muted-foreground">Next Expected Update</dt>
-                                    <dd className="text-sm">
-                                        {device.next_expected_update
-                                            ? formatDate(device.next_expected_update)
-                                            : "Unknown"}
-                                    </dd>
-                                </div>
-                            </dl>
-                        </CardContent>
-                    </Card>
-                </div>
+                            )}
+                            <div className="col-span-1 md:col-span-2 lg:col-span-3">
+                                <AspectRatio ratio={16 / 9}>
+                                    <Image src={`/api/bitmap/${editedDevice?.screen || 'simple-text'}.bmp`} overrideSrc={`/api/bitmap/${editedDevice?.screen || 'simple-text'}.bmp`} alt="Device Screen" fill className="object-cover rounded-xs ring-2 ring-gray-200" style={{ imageRendering: 'pixelated' }} unoptimized />
+                                </AspectRatio>
+                            </div>
+                        </dl>
+                    </CardContent>
+                </Card>
             )}
 
             {/* Device Logs */}

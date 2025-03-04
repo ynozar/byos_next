@@ -30,19 +30,26 @@ export function formatDate(dateString: string | null): string {
   const date = new Date(dateString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
-  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMsAbs = Math.abs(diffMs);
+  const diffSecs = Math.floor(diffMsAbs / 1000);
   const diffMins = Math.floor(diffSecs / 60);
   const diffHours = Math.floor(diffMins / 60);
   const diffDays = Math.floor(diffHours / 24);
 
-  if (diffSecs < 60) return `${diffSecs}s ago`;
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) {
+  let timeText = "";
+  if (diffSecs < 60){ timeText = `${diffSecs}s`;
+  } else if (diffMins < 60) {
+    timeText = `${diffMins}m`;
+  } else if (diffHours < 24) {
+    timeText = `${diffHours}h`;
+  } else if (diffDays < 7) {
     const options: Intl.DateTimeFormatOptions = { weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false };
-    return date.toLocaleString('en-US', options);
+    timeText = date.toLocaleString('en-US', options);
+  } else {
+    timeText = date.toLocaleString('en-US', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
   }
-  return date.toLocaleString('en-US', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
+
+  return diffMs < 0 ? `in ${timeText}` : `${timeText} ago`;
 }
 
 // Determine device status based on next expected update time
@@ -154,3 +161,32 @@ export const formatTimezone = (timezone: string): string => {
   const found = timezones.find(tz => tz.value === timezone);
   return found ? found.label : timezone;
 };
+
+export function estimateBatteryLife(
+  batteryVoltage: number, 
+  refreshPerDay: number, 
+  batteryCapacity: number = 1000 // Default 1000mAh, adjust as needed
+): { batteryPercentage: number; remainingDays: number } {
+  
+  // Battery voltage range (adjust based on real battery discharge curve if needed)
+  const V_MAX = 4.2; // Fully charged
+  const V_MIN = 2.75; // Cutoff voltage
+
+  // Estimate battery percentage (linear approximation)
+  const batteryPercentage = Math.max(0, Math.min(100, ((batteryVoltage - V_MIN) / (V_MAX - V_MIN)) * 100));
+
+  // Power consumption rates
+  const SLEEP_POWER = 0.1 * 24; // 0.1mA * 24h = 2.4mAh per day in sleep mode
+  const REFRESH_POWER = 32.8 * (24 / 3600); // 32.8mA for 24s per refresh (converted to mAh)
+  
+  // Total daily power consumption
+  const dailyConsumption = (refreshPerDay * REFRESH_POWER) + SLEEP_POWER;
+
+  // Remaining days calculation
+  const remainingDays = (batteryCapacity * (batteryPercentage / 100)) / dailyConsumption;
+
+  return {
+    batteryPercentage: parseFloat(batteryPercentage.toFixed(2)),
+    remainingDays: parseFloat(remainingDays.toFixed(2)),
+  };
+}

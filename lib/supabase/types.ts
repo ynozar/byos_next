@@ -1,20 +1,20 @@
 export type Device = {
-  id: number;
+  id: number; // bigint (BIGSERIAL)
   name: string;
   mac_address: string;
   api_key: string;
   friendly_id: string;
   screen: string | null; // Screen identifier that maps to a screen component
-  refresh_schedule: RefreshSchedule | null;
-  timezone: string; // Device timezone (e.g., 'America/New_York', 'Europe/London')
-  last_update_time: string | null; // ISO timestamp of last update
-  next_expected_update: string | null; // ISO timestamp of next expected update
+  refresh_schedule: RefreshSchedule | null; // Stored as JSONB in DB
+  timezone: string; // Defaults to 'UTC'
+  last_update_time: string | null; // ISO timestamp (TIMESTAMPTZ)
+  next_expected_update: string | null; // ISO timestamp (TIMESTAMPTZ)
   last_refresh_duration: number | null; // in seconds
-  battery_voltage: number | null; // Battery voltage in volts
-  firmware_version: string | null; // Firmware version
+  battery_voltage: number | null; // Stored as NUMERIC in DB
+  firmware_version: string | null;
   rssi: number | null; // WiFi signal strength in dBm
-  created_at: string;
-  updated_at: string;
+  created_at: string | null; // ISO timestamp (TIMESTAMPTZ, nullable with default)
+  updated_at: string | null; // ISO timestamp (TIMESTAMPTZ, nullable with default)
 }
 
 export type TimeRange = {
@@ -29,21 +29,21 @@ export type RefreshSchedule = {
 }
 
 export type Log = {
-  id: number;
+  id: number; // bigint (BIGSERIAL)
   device_id: number;
-  friendly_id?: string;
+  friendly_id?: string | null; // Now explicitly nullable
   log_data: string;
-  created_at: string;
+  created_at: string | null; // ISO timestamp (TIMESTAMPTZ, nullable with default)
 }
 
 export type SystemLog = {
-  id: string; // uuid
-  created_at: string; // timestamp with time zone
-  level: string; // character varying
-  message: string; // text
-  source: string; // character varying
-  metadata: string; // text
-  trace: string; // text
+  id: string; // UUID
+  created_at: string | null; // TIMESTAMPTZ (nullable with default)
+  level: string;
+  message: string;
+  source: string | null;
+  metadata: string | null;
+  trace: string | null;
 }
 
 export type Database = {
@@ -59,11 +59,11 @@ export type Database = {
         Insert: Omit<Log, 'id' | 'created_at'>;
         Update: Partial<Omit<Log, 'id'>>;
       };
-      system_logs: { // New system_logs table
+      system_logs: {
         Row: SystemLog;
         Insert: Omit<SystemLog, 'id' | 'created_at'>;
         Update: Partial<Omit<SystemLog, 'id'>>;
       };
     };
   };
-}; 
+};

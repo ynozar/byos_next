@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useEffect, useRef, Suspense, use } from "react"
 import { usePathname } from "next/navigation"
-import { ChevronDown, ChevronRight, Github, Menu, Monitor, Moon, Server, Sun, X, Palette } from "lucide-react"
+import { ChevronDown, ChevronRight, Github, Menu, Monitor, Moon, Server, Sun, X, Palette, Wrench } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { StatusIndicator } from "@/components/ui/status-indicator"
@@ -290,6 +290,17 @@ export default function MainLayout({ children, devicesPromise }: MainLayoutProps
                   <Server className="mr-2 h-4 w-4" />
                   System Log
                 </Link>
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  className={`w-full justify-start text-sm h-9 ${isActivePath("/maintenance") ? "bg-muted" : ""}`}
+                  asChild
+                >
+                  <Link href="/maintenance">  
+                    <Wrench className="mr-2 h-4 w-4" />
+                    Maintenance
+                  </Link>
                 </Button>
               </nav>
             </Suspense>
