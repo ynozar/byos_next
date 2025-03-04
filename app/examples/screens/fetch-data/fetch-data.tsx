@@ -28,7 +28,7 @@ export default function FetchData({
         </div>
         <div className="flex flex-1 overflow-hidden">
           <div className="p-4 overflow-y-auto flex-1">
-            {thumbnail.source?.startsWith("https://") && (
+            {thumbnail && thumbnail.source && thumbnail.source?.startsWith("https://") && (
               <div className="float-right mr-2">
                 <picture>
                   {/* YOU CANNOT USE NEXTJS IMAGE COMPONENT HERE, BECAUSE SATORI DOES NOT SUPPORT IT */}
