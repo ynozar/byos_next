@@ -31,6 +31,11 @@ export const metadata: Metadata = {
 }
 
 async function getDevicesPromise() {
+  if(!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    console.warn("Missing Supabase environment variables, entering no db mode");
+    // return a promise that resolves to an empty array
+    return Promise.resolve([]);
+  }
   const supabase = await createClient()
   const devicesPromise = cache(async () => {
     const { data, error } = await supabase.from("devices").select("*")

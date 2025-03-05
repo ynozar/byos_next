@@ -236,7 +236,7 @@ export default function MainLayout({ children, devicesPromise }: MainLayoutProps
             <span className="sr-only">Toggle Menu</span>
           </Button>
           <div className="flex items-center gap-2">
-            <h1 className="text-lg font-semibold">trmnl-byos-nextjs</h1>
+            <h1 className="text-lg font-semibold">byos-nextjs for <Link href="https://usetrmnl.com" target="_blank" rel="noopener noreferrer">TRMNL</Link></h1>
           </div>
           <div className="ml-auto flex items-center space-x-2">
             <Button variant="ghost" size="icon" onClick={toggleTheme}>

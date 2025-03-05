@@ -178,7 +178,7 @@ export const DashboardContent = ({
           <CardTitle>Recent System Logs</CardTitle>
           <CardDescription>
             Latest system events and alerts. &nbsp;
-            <Link href="/system_logs" className="text-blue-500 hover:underline flex items-center gap-1">
+            <Link href="/system-logs" className="text-blue-500 hover:underline flex items-center gap-1">
               <span>See all system logs</span> <ArrowRightIcon className="w-4 h-4" />
             </Link>
           </CardDescription>
@@ -247,7 +247,7 @@ export const DashboardContent = ({
           </Table>
           <div className="flex justify-center mt-4">
             Showing the latest {systemLogs.length} system logs. &nbsp;
-            <Link href="/system_logs" className="text-blue-500 hover:underline flex items-center gap-1">
+            <Link href="/system-logs" className="text-blue-500 hover:underline flex items-center gap-1">
               <span>See all system logs</span> <ArrowRightIcon className="w-4 h-4" />
             </Link>
           </div>

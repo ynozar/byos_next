@@ -3,26 +3,27 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
+import Image from "next/image"
 import { RefreshCw, Save, X, Search } from "lucide-react"
+import { toast } from "sonner"
+
+import type { Device } from "@/lib/supabase/types"
+import { fetchDeviceByFriendlyId, updateDevice } from "@/app/actions/device"
+import { getDeviceStatus, formatDate, estimateBatteryLife, isValidApiKey, isValidFriendlyId, generateApiKey, generateFriendlyId, timezones, formatTimezone } from "@/utils/helpers"
+import { cn } from "@/lib/utils"
+import screens from "@/app/examples/screens.json"
+
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import type { Device } from "@/lib/supabase/types"
-import { getDeviceStatus, formatDate, estimateBatteryLife } from "@/utils/helpers"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { fetchDeviceByFriendlyId, updateDevice } from "@/app/actions/device"
-import { toast } from "sonner"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
-import { isValidApiKey, isValidFriendlyId, generateApiKey, generateFriendlyId, timezones, formatTimezone } from "@/utils/helpers"
-import DeviceLogsContainer from "@/components/device-logs/device-logs-container"
-import screens from "@/app/examples/screens.json"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AspectRatio } from "@/components/ui/aspect-ratio"
-import Image from "next/image"
+import DeviceLogsContainer from "@/components/device-logs/device-logs-container"
 
 // Helper function to convert RSSI to signal quality description
 const getSignalQuality = (rssi: number): string => {
@@ -367,7 +368,7 @@ export default function DevicePage() {
         <div className="max-w-6xl mx-auto p-4 md:p-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-semibold">{device.name}</h2>
+                    <h2 className="mt-10 scroll-m-20 pb-2 text-3xl font-semibold tracking-tight transition-colors first:mt-0">{device.name}</h2>
                     <Badge className={`text-xs ${device.status === "online" ? "bg-green-500" : "bg-red-500"}`}>
                         {device.status}
                     </Badge>
@@ -701,7 +702,7 @@ export default function DevicePage() {
                                             const batteryEstimate = estimateBatteryLife(device.battery_voltage, refreshPerDay);
 
                                             // Determine color based on battery percentage
-                                            let batteryColor = "bg-green-500";
+                                            let batteryColor = "bg-primary";
                                             if (batteryEstimate.batteryPercentage < 20) {
                                                 batteryColor = "bg-red-500";
                                             } else if (batteryEstimate.batteryPercentage < 50) {
@@ -712,23 +713,24 @@ export default function DevicePage() {
                                                 <div className="space-y-1">
                                                     <div className="flex items-center gap-2">
                                                         <div className="flex items-center">
-                                                            <div className="relative w-12 h-6 border border-primary rounded-md overflow-hidden">
+                                                            <div className="relative w-10 h-5 border-1 border-primary rounded-sm p-0.5 overflow-hidden shadow-inner shadow-background/20">
                                                                 <div
-                                                                    className={`h-full transition-all duration-300 ease-in-out ${batteryColor}`}
+                                                                    className={`h-full rounded-[calc(var(--radius)-7px)] transition-all duration-300 ease-in-out ${batteryColor}`}
                                                                     style={{
                                                                         width: `${batteryEstimate.batteryPercentage}%`,
                                                                     }}
                                                                 ></div>
-
-                                                                <div className="absolute inset-0 flex items-center justify-center text-xs">{batteryEstimate.batteryPercentage}%</div>
                                                             </div>
                                                             {/* positive end of the battery */}
-                                                            <div className="ml-[1px] h-3 w-1 bg-primary rounded-r-sm"></div> 
+                                                            <div className="ml-[1px] h-2 w-0.5 bg-primary rounded-r-sm"></div>
                                                         </div>
+                                                        <span className="text-sm font-medium">
+                                                            {batteryEstimate.batteryPercentage}%
+                                                        </span>
                                                         <span className="text-sm font-medium">
                                                             {device.battery_voltage.toFixed(2)}V
                                                         </span>
-                                                        <span className="text-xs text-muted-foreground">
+                                                        <span className="text-sm text-muted-foreground">
                                                             (~{batteryEstimate.remainingDays} days remaining based on {refreshPerDay} refreshes per day)
                                                         </span>
                                                     </div>

@@ -39,6 +39,27 @@
 3. Follow the deployment instructions
 4. Obtain your server base URL
 
+note: once setup, sync env var to your local development by:
+1. go to https://supabase.com/dashboard/project/[project-ref]/settings/integrations
+2. if not linked already, link your supabase project to vercel
+3. under Vercel Integration, find "manage", turn on "preview" and "development", and then "Resync environment variables"
+4. now using `vercel link` and `vercel env pull`, you should see these env vars in your local `.env.local` file:
+```
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+NEXT_PUBLIC_SUPABASE_URL
+POSTGRES_DATABASE
+POSTGRES_HOST
+POSTGRES_PASSWORD
+POSTGRES_PRISMA_URL
+POSTGRES_URL
+POSTGRES_URL_NON_POOLING
+POSTGRES_USER
+SUPABASE_ANON_KEY
+SUPABASE_JWT_SECRET
+SUPABASE_SERVICE_ROLE_KEY
+SUPABASE_URL
+```
+
 ### Option 2: Local Development Setup
 
 #### Prerequisites
@@ -54,7 +75,69 @@ cd byos-nextjs
 
 # Install dependencies
 pnpm install # or npm install or yarn install
+```
+set up a superbase account, add these 2 env vars:
+```
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+```
+you will need to manually initialize the database tables, run the following command in your supabasae SQL editor:
+```sql
+-- Enable UUID generation extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- Devices Table
+CREATE TABLE public.devices (
+    id BIGSERIAL PRIMARY KEY,
+    friendly_id VARCHAR NOT NULL UNIQUE,
+    name VARCHAR NOT NULL,
+    mac_address VARCHAR NOT NULL UNIQUE,
+    api_key VARCHAR NOT NULL UNIQUE,
+    screen VARCHAR NULL DEFAULT NULL,
+    refresh_schedule JSONB NULL,
+    timezone TEXT NOT NULL DEFAULT 'UTC',
+    last_update_time TIMESTAMPTZ NULL,
+    next_expected_update TIMESTAMPTZ NULL,
+    last_refresh_duration INTEGER NULL,
+    battery_voltage NUMERIC NULL,
+    firmware_version TEXT NULL,
+    rssi INTEGER NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for Devices
+CREATE INDEX idx_devices_refresh_schedule ON public.devices USING GIN (refresh_schedule);
+
+-- Logs Table
+CREATE TABLE public.logs (
+    id BIGSERIAL PRIMARY KEY,
+    device_id BIGINT NOT NULL,
+    friendly_id TEXT NULL,
+    log_data TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT logs_friendly_id_fkey FOREIGN KEY (friendly_id) REFERENCES public.devices (friendly_id)
+);
+
+-- System Logs Table
+CREATE TABLE public.system_logs (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    level VARCHAR NOT NULL,
+    message TEXT NOT NULL,
+    source VARCHAR NULL,
+    metadata TEXT NULL,
+    trace TEXT NULL
+);
+
+-- Indexes for System Logs
+CREATE INDEX idx_system_logs_created_at ON public.system_logs (created_at);
+CREATE INDEX idx_system_logs_level ON public.system_logs (level);
+```
+
+
+then run the following command to start the development server:
+```bash
 # Start development server
 pnpm run dev # or npm run dev or yarn run dev
 ```
