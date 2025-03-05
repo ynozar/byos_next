@@ -33,7 +33,7 @@ export default function BitmapPatterns() {
         <PreSatori>{(transform) => (<>{transform( // required as parent cannot access children props, so we need to pass the transform function to the children
             <div className="w-[800px] h-[480px] bg-white relative overflow-hidden" >
                 <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    {ditherValues.map(({ value, percentage }, index) => {
+                    {ditherValues.map(({ value }, index) => {
                         const realIndex = ditherValues.length - index;
                         // because the smallest get rather last, we need to reverse the index
                         // note it starts from 1 not 0, as total 6 - last index 5 is 1 
@@ -66,7 +66,7 @@ export default function BitmapPatterns() {
                     })}
                 </div>
                 <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                    {ditherValues.reverse().slice(0, 11).map(({ value }, index) => (
+                    {ditherValues.reverse().slice(0, 11).map(({ value }) => (
                         <div key={`text-${value}`} style={{ height: `${rowHeight}px`, color: value > 850 ? 'white' : 'black' }}>
                             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '24px' }}>{value} | {1000-value}</div>
                         </div>
