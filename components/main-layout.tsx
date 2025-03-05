@@ -241,6 +241,7 @@ export default function MainLayout({ children, devicesPromise }: MainLayoutProps
           </Button>
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-semibold">byos-nextjs for <Link href="https://usetrmnl.com" target="_blank" rel="noopener noreferrer">TRMNL</Link></h1>
+            <span className="text-red-500 font-mono font-bold text-xs -ml-2 -mt-4 align-text-top">alpha</span>
           </div>
           <div className="ml-auto flex items-center space-x-2">
             <Button variant="ghost" size="icon" onClick={toggleTheme}>
@@ -353,6 +354,26 @@ export default function MainLayout({ children, devicesPromise }: MainLayoutProps
             {children}
         </main>
       </div>
+      <footer className="border-t bg-background py-3 px-4 text-sm text-muted-foreground">
+        <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-2">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold">byos-nextjs</span>
+            <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-md">α</span>
+          </div>
+          <div className="text-xs">
+            <span>Found an issue? </span>
+            <Link 
+              href="https://github.com/ghcpuman902/byos-nextjs/issues" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="underline hover:text-foreground"
+            >
+              Open a GitHub issue
+            </Link>
+            <span> or email with screenshots</span>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

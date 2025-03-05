@@ -1,13 +1,23 @@
 # BYOS Next.js for TRMNL 🖥️
 
 [![License](https://img.shields.io/github/license/ghcpuman902/byos-nextjs)](https://github.com/ghcpuman902/byos-nextjs/blob/main/LICENSE)
-[![Vercel Deployment](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fghcpuman902%2Fbyos-nextjs)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat&logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=flat&logo=react)](https://react.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.0-38B2AC?style=flat&logo=tailwind-css)](https://tailwindcss.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat&logo=typescript)](https://www.typescriptlang.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-Integrated-3ECF8E?style=flat&logo=supabase)](https://supabase.com/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](https://github.com/ghcpuman902/byos-nextjs/pulls)
+[![GitHub Stars](https://img.shields.io/github/stars/ghcpuman902/byos-nextjs?style=social)](https://github.com/ghcpuman902/byos-nextjs/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/ghcpuman902/byos-nextjs?style=social)](https://github.com/ghcpuman902/byos-nextjs/network/members)
+
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fghcpuman902%2Fbyos-nextjs&project-name=byos-nextjs&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22supabase%22%2C%22productSlug%22%3A%22supabase%22%7D%5D)
 
 ## 📖 Table of Contents
 - [Overview](#-overview)
 - [Features](#-features)
 - [Quick Start](#-quick-start)
-- [How It Works](#-how-does-it-work)
+- [How It Works](#-how-it-works)
 - [Installation](#-installation)
 - [Usage](#-usage)
 - [Troubleshooting](#-troubleshooting)
@@ -28,6 +38,35 @@
 - 💻 Modern tech stack (Next.js 15, React 19, Tailwind CSS v4)
 - ⚠️ Using a canary version of Shadcn for Tailwind v4 support; be cautious with AI-generated code.
 
+## 🗺️ Roadmap
+
+This project is in the **Alpha** stage. Here's our development roadmap:
+
+### Current Progress
+- ✅ Core functionality for device management
+- ✅ Dynamic screen generation
+- ✅ Supabase integration
+- ✅ Examples framework
+
+### Coming Soon
+- 🔄 More template examples
+- 🔄 Improved initialization flow
+- 🔄 MySQL/local file support
+- 🔄 "No database" mode for simpler deployments
+- 🔄 Demo mode for testing without affecting production devices
+
+### Future Plans
+- 📝 Enhanced documentation
+- 🧪 Testing framework
+- 🔒 Advanced authentication options
+
+### Reporting Issues
+If you encounter any problems:
+
+1. **GitHub Issues**: Open an issue on our [GitHub repository](https://github.com/ghcpuman902/byos-nextjs/issues)
+2. **Email**: Send details to [manglekuo@gmail.com](mailto:manglekuo@gmail.com)
+3. **Discussions**: Reply to my message in the TRMNL Discord server
+
 ## 🏁 Quick Start
 
 ### Option 1: Deploy to Vercel
@@ -37,13 +76,14 @@
 1. Click the Vercel deployment button
 2. Link a free Supabase database
 3. Follow the deployment instructions
-4. Obtain your server base URL
+4. Open the deployed app and initialize the database tables
+5. Point your device to the deployed app (see [How It Works](#-how-it-works) for details)
 
-note: once setup, sync env var to your local development by:
-1. go to https://supabase.com/dashboard/project/[project-ref]/settings/integrations
-2. if not linked already, link your supabase project to vercel
-3. under Vercel Integration, find "manage", turn on "preview" and "development", and then "Resync environment variables"
-4. now using `vercel link` and `vercel env pull`, you should see these env vars in your local `.env.local` file:
+> **Note for local development**: once setup, sync enviroment variables to your local development by:
+> 1. go to https://supabase.com/dashboard/project/[project-ref]/settings/integrations
+> 2. if not linked already, link your supabase project to vercel
+> 3. under Vercel Integration, find "manage", turn on "preview" and "development", and then "Resync environment variables"
+>4. now using `vercel link` and `vercel env pull`, you should see these environment variables in your local `.env.local` file:
 ```
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 NEXT_PUBLIC_SUPABASE_URL
@@ -64,7 +104,7 @@ SUPABASE_URL
 
 #### Prerequisites
 - Node.js (v20 or later)
-- pnpm or npm or yarn
+- pnpm, npm, or yarn
 - Git
 
 #### Installation Steps
@@ -76,12 +116,12 @@ cd byos-nextjs
 # Install dependencies
 pnpm install # or npm install or yarn install
 ```
-set up a superbase account, add these 2 env vars:
+Set up a Supabase account and add these environment variables to your `.env.local` file:
 ```
 NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 ```
-you will need to manually initialize the database tables, run the following command in your supabasae SQL editor:
+Manually initialize the database tables in your Supabase SQL editor:
 ```sql
 -- Enable UUID generation extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -135,34 +175,32 @@ CREATE INDEX idx_system_logs_created_at ON public.system_logs (created_at);
 CREATE INDEX idx_system_logs_level ON public.system_logs (level);
 ```
 
-
-then run the following command to start the development server:
+Start the development server:
 ```bash
 # Start development server
 pnpm run dev # or npm run dev or yarn run dev
 ```
 
 ### Important Note
-When dealing with AI-generated code, be aware that Tailwind v4 has some slightly different syntax compared to previous versions.
-when adding shadcn new componenet, use the following command:
+When dealing with AI-generated code, be aware that Tailwind v4 has some syntax differences. Use the following command to add new Shadcn components:
 ```bash
 pnpm dlx shadcn@canary add [component1] [component2] [component3]
 ```
 
-## 🔍 How Does It Work?
+## 🔍 How It Works
 
 ### 1. Device Interaction Endpoints
 
-The BYOS architecture provides three main endpoints that devices interact with:
+The BYOS architecture provides three main endpoints for device interaction:
 
 #### Setup Endpoint (`/api/setup`)
 - **Purpose**: Device registration and API key generation
-- **When Used**: Only called when a device is reset or does not have an API key stored
+- **Usage**: Called when a device is reset or lacks an API key
 - **Request Flow**:
   - Device sends MAC address in request headers
-  - Server checks if device exists in database
-  - If new, generates unique API key and friendly device ID
-  - Returns API key to device for future authentication
+  - Server checks if the device exists in the database
+  - If new, generates a unique API key and friendly device ID
+  - Returns API key to the device for future authentication
 
 ```bash
 curl -X GET http://[YOUR BASE URL]/api/setup \
@@ -182,7 +220,7 @@ curl -X GET http://[YOUR BASE URL]/api/setup \
 
 #### Display Endpoint (`/api/display`)
 - **Purpose**: Primary endpoint for screen content delivery
-- **When Used**: Called repeatedly by the device after setup to get new screens
+- **Usage**: Called repeatedly by the device after setup to get new screens
 - **Key Functions**:
   1. Provides the URL for the next screen to display
   2. Specifies how long the device should sleep before requesting again
@@ -207,20 +245,20 @@ curl -X GET http://[YOUR BASE URL]/api/display \
 }
 ```
 
-> **Note**: While the official TRMNL implementation also supports configuring button functionality, this implementation does not currently handle those features.
+> **Note**: This implementation does not currently handle button functionality.
 
 #### Log Endpoint (`/api/log`)
 - **Purpose**: Error and issue reporting
-- **When Used**: Only called when errors or issues occur on the device
+- **Usage**: Called when errors or issues occur on the device
 - **Behavior**: Logs are stored in the Supabase database for troubleshooting
 
 ### 2. Screen Generation Approach
 
-Unlike the official Ruby/Python implementations which pre-generate screens, this Next.js implementation:
+Unlike the official Ruby/Python implementations, this Next.js implementation:
 
 - **Generates screens on-demand**: When a device requests a display update
 - **Leverages Next.js caching**: Uses built-in caching mechanisms for performance
-- **Dynamic BMP generation**: The bitmap URL is not a static file but a dynamic API endpoint
+- **Dynamic BMP generation**: The bitmap URL is a dynamic API endpoint
 - **Efficient revalidation**: 
   - First request may take longer to generate the screen
   - Subsequent requests are served from cache while revalidating in the background
@@ -248,15 +286,15 @@ JSX component -> pre-satori wrapper -> satori (svg) -> vercel image response (pn
 
 ## 🧪 Examples
 
-The project includes an examples section that allows you to visualize and test components in both their direct rendering and bitmap (BMP) rendering forms. This is designed to help develop and test components for e-ink displays.
+The project includes an examples section to visualize and test components in both direct rendering and bitmap (BMP) rendering forms. This helps develop and test components for the TRMNL device.
 
 ### How Examples Work
 
-visit `[base url]/examples` to view the examples page.
+Visit `[base url]/examples` to view the examples page.
 
-To set up your own screen example, you can use the following structure:
+To set up your own screen example, use the following structure:
 
-1. Create your component folder in the `app/examples/screens` directory following any of the existing examples.
+1. Create your component folder in the `app/examples/screens` directory following any existing examples.
 2. Add your component and data fetching logic
 3. Add an entry to `app/examples/screens.json`
 
