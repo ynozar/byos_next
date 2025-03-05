@@ -1,6 +1,6 @@
 # BYOS Next.js for TRMNL 🖥️
 
-[![License](https://img.shields.io/github/license/usetrmnl/byos-nextjs)](https://github.com/usetrmnl/byos-nextjs/blob/main/LICENSE)
+[![License](https://img.shields.io/github/license/ghcpuman902/byos-nextjs)](https://github.com/ghcpuman902/byos-nextjs/blob/main/LICENSE)
 [![Vercel Deployment](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fghcpuman902%2Fbyos-nextjs)
 
 ## 📖 Table of Contents
