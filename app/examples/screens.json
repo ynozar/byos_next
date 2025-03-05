@@ -16,6 +16,23 @@
     "version": "0.1.0",
     "category": "display-components"
   },
+  "album": {
+    "title": "Album",
+    "published": true,
+    "createdAt": "2025-03-01T00:00:00Z",
+    "updatedAt": "2025-03-01T00:00:00Z",
+    "description": "A simple album screen. Edit this screen at /app/screens/album/album.tsx",
+    "componentPath": "./screens/album",
+    "hasDataFetch": false,
+    "props": {},
+    "tags": ["bitmap", "e-ink", "display", "text"],
+    "author": {
+      "name": "Mangle Kuo",
+      "github": "ghcpuman902"
+    },
+    "version": "0.1.0",
+    "category": "display-components"
+  },
   "bitmap-patterns": {
     "title": "Bitmap Patterns",
     "published": true,
