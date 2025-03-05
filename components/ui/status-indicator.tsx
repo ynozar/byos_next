@@ -25,7 +25,7 @@ export const StatusIndicator = ({
     : "bg-red-500";
 
   return (
-    <div className={cn("relative", className)}>
+    <div className={cn("relative flex items-center", className)}>
       <span className={cn(
         "relative inline-flex rounded-full",
         sizeClasses[size],

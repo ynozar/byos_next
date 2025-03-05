@@ -89,7 +89,7 @@ const DeviceList = ({ devices, isActiveDevicePath }: {
 }) => {
   return (
     <>
-      {devices.map((device) => (
+      {Array.isArray(devices) ? devices.map((device) => (
         <Button
           key={device.id}
           variant="ghost"
@@ -108,7 +108,11 @@ const DeviceList = ({ devices, isActiveDevicePath }: {
             </div>
           </Link>
         </Button>
-      ))}
+      )) : (
+        <div className="pl-6 space-y-2">
+         No devices found
+        </div>
+      )}
     </>
   )
 }

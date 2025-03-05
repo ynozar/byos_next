@@ -164,6 +164,10 @@
   }
 }
 
+.text-box {
+  text-box: ex alphabetic
+}
+
 
 .animate-radar-ping:after {
   content: "";

@@ -1,4 +1,3 @@
-
 import { PreSatori } from "@/utils/pre-satori";
 
 export default function BitmapPatterns() {
@@ -27,32 +26,60 @@ export default function BitmapPatterns() {
         { value: 1000, percentage: "100%" }
     ];
 
-    // Calculate the RGB value based on dither value (0-1000 scale where 1000 is black)
-    const calculateRgbValue = (ditherValue: number) => {
-        // Convert from 0-1000 scale to 255-0 scale (inverted because 1000 = black)
-        const colorValue = Math.max(0, Math.min(255, Math.round(255 - (ditherValue / 1000 * 255))));
-        return `rgb(${colorValue},${colorValue},${colorValue})`;
-    };
 
     // Calculate row height to evenly distribute across the container
-    const rowHeight = 480 / ditherValues.length;
-
+    const rowHeight = 480 / Math.ceil(ditherValues.length / 2);
     return (
         <PreSatori>{(transform) => (<>{transform( // required as parent cannot access children props, so we need to pass the transform function to the children
-            <div className="w-[800px] h-[480px] bg-white flex flex-col">
-                {ditherValues.map(({ value, percentage }) => (
-                    <div key={value} className="flex items-center" style={{ height: `${rowHeight}px` }}>
-                        <div className={`dither dither-${value} font-bold font-mono ${value < 500 ? 'text-black' : ''} w-[650px] h-full flex items-center`}>
-                            8x8 pattern, dither-{value}
+            <div className="w-[800px] h-[480px] bg-white relative overflow-hidden" >
+                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    {ditherValues.map(({ value, percentage }, index) => {
+                        const realIndex = ditherValues.length - index;
+                        // because the smallest get rather last, we need to reverse the index
+                        // note it starts from 1 not 0, as total 6 - last index 5 is 1 
+
+                        let size = { w: 0, h: 0 };
+                        let location = { x: 0, y: 0 };
+                        // use height 480px for the first 6
+                        const deltaRadiusForFirst6 = 480 / 6;
+                        size = {
+                            w: deltaRadiusForFirst6 * (realIndex),
+                            h: deltaRadiusForFirst6 * (realIndex)
+                        }
+                        location = {
+                            x: -1 * Math.round(size.w / 2) + 800 / 2,
+                            y: (6 - realIndex) * deltaRadiusForFirst6
+                        }
+                        return (
+                            <div key={value}
+                                className={`dither dither-${value}`}
+                                style={{
+                                    width: `${size.w}px`,
+                                    height: `${size.h}px`,
+                                    position: 'absolute',
+                                    borderRadius: '50%',
+                                    top: `${location.y}px`, // Center vertically with offset
+                                    left: `${location.x}px` // Center horizontally with offset
+                                }}>
+                            </div>
+                        );
+                    })}
+                </div>
+                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    {ditherValues.reverse().slice(0, 11).map(({ value }, index) => (
+                        <div key={`text-${value}`} style={{ height: `${rowHeight}px`, color: value > 850 ? 'white' : 'black' }}>
+                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '24px' }}>{value} | {1000-value}</div>
                         </div>
-                        <div
-                            className="w-[150px] h-full text-center flex"
-                            style={{ backgroundColor: calculateRgbValue(value) }}
-                        >
-                            <span className={`text-xs font-mono ${value < 500 ? 'text-black' : 'text-white'}`}>{percentage}</span>
-                        </div>
+                    ))}
+                </div>
+                <div className="absolute bottom-0 right-0 flex flex-col text-2xl p-2 items-end text-black">
+                    <div>
+                        22 shades of gray
                     </div>
-                ))}
+                    <div>
+                        0: white, 1000: black
+                    </div>
+                </div>
             </div>
         )}</>)}</PreSatori>
     );
