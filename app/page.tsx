@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardContent } from "@/components/dashboard/dashboard-content";
 import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton";
-import { getLocalIPAddresses } from "@/utils/helpers";
+import { getHostUrl } from "@/utils/helpers";
 import { DatabaseInitPrompt } from "@/components/dashboard/database-init-prompt";
 import type { Device, SystemLog } from "@/lib/supabase/types";
 
@@ -53,7 +53,7 @@ export default async function Dashboard() {
   let noDBMode = false;
   let dbInitRequired = false;
   let errorMessage = '';
-  
+  const hostUrl = getHostUrl();
   // Check environment variables first
   if(!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     console.warn("Missing Supabase environment variables, entering no db mode");
@@ -83,9 +83,7 @@ export default async function Dashboard() {
     }
   }
 
-  const hostUrl = process.env.NODE_ENV === 'production'
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : `http://${getLocalIPAddresses()}:${process.env.PORT || 3000}`;
+
 
   // Prepare the data for the DashboardContent component
   const devices = Array.isArray(devicesResult) ? devicesResult : [];

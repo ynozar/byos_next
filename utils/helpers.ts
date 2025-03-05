@@ -23,6 +23,13 @@ export function getLocalIPAddresses() {
   return results[Object.keys(results)[0]]?.[0] || 'No IP found';
 };
 
+
+export function getHostUrl() {
+  return process.env.NODE_ENV === 'production'
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : `http://${getLocalIPAddresses()}:${process.env.PORT || 3000}`;
+}
+
 // Format date to a readable format
 export function formatDate(dateString: string | null): string {
   if (!dateString) return "Never";
