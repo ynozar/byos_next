@@ -25,10 +25,13 @@
 
 ## 🚀 Overview
 
-**BYOS (Build Your Own Server)** is a community-maintained library for the TRMNL device, designed to provide a flexible and customizable server solution. This Next.js implementation offers a robust, modern approach to device management and display generation.
+**BYOS (Build Your Own Server) Next.js** is a community-maintained library for the TRMNL device, designed to provide a flexible and customizable server solution. This Next.js implementation offers a robust, modern approach to device management and display generation.
 
 ## ✨ Features
 ![screenshot of the app](public/byos-nextjs-screenshot.png)
+
+live demo: [https://byos-nextjs.vercel.app/](https://byos-nextjs.vercel.app/)
+
 - 🔧 Customizable device management
 - 🖼️ Dynamic screen generation
 - 🚀 Easy deployment to Vercel
