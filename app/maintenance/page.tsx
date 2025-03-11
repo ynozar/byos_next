@@ -1,10 +1,10 @@
-import { DatabaseMaintenance } from "@/components/maintenance/database-maintenance";
-import { DeviceManagement } from "@/components/maintenance/device-management";
-import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/server";
-import { AlertCircle } from "lucide-react";
-import Link from "next/link";
-import { Suspense } from "react";
+// import { DatabaseMaintenance } from "@/components/maintenance/database-maintenance";
+// import { DeviceManagement } from "@/components/maintenance/device-management";
+// import { Button } from "@/components/ui/button";
+// import { createClient } from "@/lib/supabase/server";
+// import { AlertCircle } from "lucide-react";
+// import Link from "next/link";
+// import { Suspense } from "react";
 
 export const metadata = {
 	title: "Maintenance",
@@ -12,7 +12,7 @@ export const metadata = {
 };
 
 export default async function Page() {
-	const { dbStatus } = await createClient();
+	// const { dbStatus } = await createClient();
 
 	return (
 		<div className="max-w-6xl mx-auto p-4 md:p-6">
@@ -21,12 +21,11 @@ export default async function Page() {
 					Maintenance
 				</h2>
 				<p className="text-muted-foreground">
-					This page provides maintenance tools for managing the database and
-					devices.
+					This page is coming soon. Please check back later for maintenance tools.
 				</p>
 			</div>
 
-			<div className="space-y-8">
+			{/* <div className="space-y-8">
 				{!dbStatus.ready ? (
 					<>
 						<div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center">
@@ -51,7 +50,7 @@ export default async function Page() {
 						<DeviceManagement />
 					</Suspense>
 				)}
-			</div>
+			</div> */}
 		</div>
 	);
 }
