@@ -35,6 +35,7 @@
 - 📊 Comprehensive logging system
 - 🔒 Secure API key management
 - 💻 Modern tech stack (Next.js 15, React 19, Tailwind CSS v4)
+- 🧹 Clean, standardized codebase with Biome for formatting
 - ⚠️ Using a canary version of Shadcn for Tailwind v4 support; be cautious with AI-generated code.
 
 ## 🗺️ Roadmap
@@ -46,12 +47,14 @@ This project is in the **Alpha** stage. Here's our development roadmap:
 - ✅ Dynamic screen generation
 - ✅ Supabase integration
 - ✅ Examples framework
+- ✅ Codebase refactoring and standardization
+- ✅ Improved initialization flow (2025-03-11)
+- ✅ "No database" mode for simpler deployments (2025-03-11)
 
 ### Coming Soon
+- 🔄 More pixelated fonts
 - 🔄 More template examples
-- 🔄 Improved initialization flow
 - 🔄 MySQL/local file support
-- 🔄 "No database" mode for simpler deployments
 - 🔄 Demo mode for testing without affecting production devices
 
 ### Future Plans
@@ -79,7 +82,7 @@ If you encounter any problems:
 5. Point your device to the deployed app (see [How It Works](#-how-it-works) for details)
 
 > **Note for local development**: once setup, sync enviroment variables to your local development by:
-> 1. go to https://supabase.com/dashboard/project/[project-ref]/settings/integrations
+> 1. go to [https://supabase.com/dashboard/project/_/settings/integrations](https://supabase.com/dashboard/project/_/settings/integrations)
 > 2. if not linked already, link your supabase project to vercel
 > 3. under Vercel Integration, find "manage", turn on "preview" and "development", and then "Resync environment variables"
 >4. now using `vercel link` and `vercel env pull`, you should see these environment variables in your local `.env.local` file:
@@ -178,6 +181,14 @@ Start the development server:
 ```bash
 # Start development server
 pnpm run dev # or npm run dev or yarn run dev
+```
+
+### Code Formatting
+This project uses Biome for code formatting. To format your code:
+
+```bash
+# Format code
+pnpm lint
 ```
 
 ### Important Note
