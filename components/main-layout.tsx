@@ -256,22 +256,22 @@ export default function MainLayout({
 	return (
 		<div className="min-h-screen flex flex-col">
 			<header className="border-b bg-background">
-				<div className="flex h-14 items-center px-4">
+				<div className="flex items-center px-0 md:px-5">
 					<Button
 						variant="ghost"
 						size="icon"
-						className="mr-2 md:hidden"
+						className="md:hidden"
 						onClick={() => setIsSidebarOpen(!isSidebarOpen)}
 					>
 						<Menu className="size-5" />
 						<span className="sr-only">Toggle Menu</span>
 					</Button>
 					<div className="flex items-center gap-2">
-						<h1 className="text-lg font-semibold">byos-nextjs</h1>
+						<h1 className="text-base md:text-lg font-semibold">byos-nextjs</h1>
 						<span className="text-red-500 font-mono font-bold text-xs -ml-2 -mt-4 align-text-top">
 							alpha
 						</span>
-						<h1 className="text-lg font-semibold">
+						<h1 className="text-base md:text-lg font-semibold">
 							for{" "}
 							<Link
 								href="https://usetrmnl.com"
@@ -282,7 +282,7 @@ export default function MainLayout({
 							</Link>
 						</h1>
 					</div>
-					<div className="ml-auto flex items-center space-x-2">
+					<div className="ml-auto flex items-center space-x-0 md:space-x-2">
 						<Button variant="ghost" size="icon" onClick={toggleTheme}>
 							<Sun className="size-5 dark:hidden" />{" "}
 							<Moon className="size-5 hidden dark:block" />
@@ -417,19 +417,30 @@ export default function MainLayout({
 						</Suspense>
 					</div>
 				</aside>
-				<main ref={mainRef} className="flex-1">
+				<main ref={mainRef} className="w-full max-w-6xl mx-auto p-2 md:p-4 lg:p-6">
 					{children}
 				</main>
 			</div>
-			<footer className="border-t bg-background py-3 px-4 text-sm text-muted-foreground">
-				<div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-2">
+			<footer className="border-t bg-background py-2 px-0 md:px-5 text-sm text-muted-foreground">
+				<div className="flex flex-col md:flex-row justify-between items-center">
 					<div className="flex items-center gap-2">
-						<span className="font-semibold">byos-nextjs</span>
+						<span className="text-base md:text-lg font-semibold">byos-nextjs</span>
 						<span className="text-red-500 font-mono font-bold text-xs -ml-2 -mt-4 align-text-top">
 							alpha
 						</span>
+						<h1 className="text-base md:text-lg font-semibold">
+							for{" "}
+						<Link
+							href="https://usetrmnl.com"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="underline hover:text-foreground"
+						>
+							TRMNL
+						</Link>
+						</h1>
 					</div>
-					<div className="text-xs">
+					<div className="text-xs md:text-sm">
 						<span>Found an issue? </span>
 						<Link
 							href="https://github.com/ghcpuman902/byos-nextjs/issues"

@@ -250,11 +250,12 @@ export const formatTimezone = (timezone: string): string => {
 export function estimateBatteryLife(
 	batteryVoltage: number,
 	refreshPerDay: number,
-	batteryCapacity?: number,
-): { batteryPercentage: number; remainingDays: number } {
+	batteryCapacity = 1800, // use 2500mAh if you have battery upgrade
+): { batteryPercentage: number; remainingDays: number; isCharging: boolean } {
 	// Battery voltage range (adjust based on real battery discharge curve if needed)
+	const V_CHARGING = 4.60; // Charging voltage
 	const V_MAX = 4.2; // Fully charged
-	const V_MIN = 2.75; // Cutoff voltage
+	const V_MIN = 3.60; // Cutoff voltage
 
 	// Estimate battery percentage (linear approximation)
 	const batteryPercentage = Math.max(
@@ -276,5 +277,6 @@ export function estimateBatteryLife(
 	return {
 		batteryPercentage: Number.parseFloat(batteryPercentage.toFixed(2)),
 		remainingDays: Number.parseFloat(remainingDays.toFixed(2)),
+		isCharging: batteryVoltage > V_CHARGING,
 	};
 }

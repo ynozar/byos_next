@@ -68,7 +68,7 @@ export default function DeviceLogsViewer({
 			const activeTab = newSearchParams.get("activeTab");
 
 			// Add prefix to all parameters except activeTab
-			Object.entries(params).forEach(([key, value]) => {
+			for (const [key, value] of Object.entries(params)) {
 				const prefixedKey = key === "activeTab" ? key : `${paramPrefix}${key}`;
 
 				if (value === null) {
@@ -76,7 +76,7 @@ export default function DeviceLogsViewer({
 				} else {
 					newSearchParams.set(prefixedKey, String(value));
 				}
-			});
+			}
 
 			// Ensure activeTab is preserved
 			if (activeTab) {
@@ -175,7 +175,6 @@ export default function DeviceLogsViewer({
 				return "bg-red-100 text-red-800 border-red-200";
 			case "warning":
 				return "bg-amber-100 text-amber-800 border-amber-200";
-			case "info":
 			default:
 				return "bg-blue-100 text-blue-800 border-blue-200";
 		}
@@ -256,8 +255,8 @@ export default function DeviceLogsViewer({
 			</Tabs>
 
 			{/* Logs table */}
-			<Card className="overflow-hidden">
-				<div className="overflow-x-auto max-w-[90vw]">
+			<Card className="overflow-hidden p-0">
+				<div className="overflow-x-auto">
 					<table className="w-full">
 						<thead>
 							<tr className="border-b bg-muted/50">
@@ -588,7 +587,8 @@ export default function DeviceLogsViewer({
 																	/>
 																),
 															);
-														} else if (
+														}
+														if (
 															"logs_array" in logData &&
 															Array.isArray(logData.logs_array)
 														) {
@@ -613,7 +613,8 @@ export default function DeviceLogsViewer({
 																	/>
 																),
 															);
-														} else if ("log_message" in logData) {
+														} 
+														if ("log_message" in logData) {
 															// Handle case where logData is a single log entry but not in an array
 															return (
 																<DeviceStatusStamp

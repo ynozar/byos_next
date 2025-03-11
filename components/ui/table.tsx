@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import type React from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -67,7 +67,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
 		<th
 			data-slot="table-head"
 			className={cn(
-				"text-muted-foreground h-10 px-2 text-left align-middle font-medium [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+				"text-muted-foreground h-10 px-1 sm:px-2 text-left align-middle font-medium [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px] text-xs sm:text-sm",
 				className,
 			)}
 			{...props}
@@ -80,7 +80,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
 		<td
 			data-slot="table-cell"
 			className={cn(
-				"p-2 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+				"p-1.5 sm:p-2 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px] text-xs sm:text-sm",
 				className,
 			)}
 			{...props}
@@ -95,7 +95,7 @@ function TableCaption({
 	return (
 		<caption
 			data-slot="table-caption"
-			className={cn("text-muted-foreground mt-4 text-sm", className)}
+			className={cn("text-muted-foreground mt-3 sm:mt-4 text-xs sm:text-sm", className)}
 			{...props}
 		/>
 	);

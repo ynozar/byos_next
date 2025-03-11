@@ -317,8 +317,8 @@ export default function SystemLogsViewer({
 			</Tabs>
 
 			{/* Logs table */}
-			<Card className="overflow-hidden">
-				<div className="overflow-x-auto max-w-[90vw]">
+			<Card className="overflow-hidden p-0">
+				<div className="overflow-x-auto">
 					<table className="w-full">
 						<thead>
 							<tr className="border-b bg-muted/50">

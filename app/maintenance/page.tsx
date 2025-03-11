@@ -15,7 +15,7 @@ export default async function Page() {
 	// const { dbStatus } = await createClient();
 
 	return (
-		<div className="max-w-6xl mx-auto p-4 md:p-6">
+		<>
 			<div className="mb-6">
 				<h2 className="mt-10 scroll-m-20 pb-2 text-3xl font-semibold tracking-tight transition-colors first:mt-0">
 					Maintenance
@@ -51,6 +51,6 @@ export default async function Page() {
 					</Suspense>
 				)}
 			</div> */}
-		</div>
+		</>
 	);
 }

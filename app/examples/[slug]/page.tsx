@@ -203,7 +203,7 @@ const ComponentContent = ({ slug }: { slug: string }) => {
 	const props = use(propsPromise);
 
 	return (
-		<div className="w-full p-4 md:p-6 @container">
+		<div className="@container">
 			<div className="flex flex-col">
 				<div className="border-b pb-4 mb-4">
 					<Suspense

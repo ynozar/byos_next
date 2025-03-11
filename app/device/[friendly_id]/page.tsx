@@ -442,7 +442,7 @@ export default function DevicePage() {
 	}
 
 	return (
-		<div className="max-w-6xl mx-auto p-4 md:p-6">
+		<>
 			<div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
 				<div className="flex items-center gap-2">
 					<h2 className="mt-10 scroll-m-20 pb-0 text-3xl font-semibold tracking-tight transition-colors first:mt-0 text-box">
@@ -810,80 +810,47 @@ export default function DevicePage() {
 					</CardHeader>
 					<CardContent>
 						<dl className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+							<div className="col-span-1 md:col-span-2 lg:col-span-3">
+								<dt className="text-sm font-medium text-muted-foreground">
+									Status
+								</dt>
+								<dd className="text-sm flex items-center gap-2">
+									<span className={`inline-block w-2 h-2 rounded-full ${device.status === "online" ? "bg-green-500" : "bg-red-500"}`}></span>
+									<span className="text-box capitalize">{device.status}</span>
+									{device.last_update_time && (
+										<span className="text-muted-foreground">
+											Last update: {formatDate(device.last_update_time)}
+										</span>
+									)}
+								</dd>
+							</div>
+							
 							<div>
 								<dt className="text-sm font-medium text-muted-foreground">
 									Name
 								</dt>
 								<dd className="text-sm text-box">{device.name}</dd>
 							</div>
-							<div>
+							
+							<div className="col-span-1 md:col-span-1">
 								<dt className="text-sm font-medium text-muted-foreground">
 									Friendly ID
 								</dt>
-								<dd className="text-sm font-mono">{device.friendly_id}</dd>
+								<dd className="text-sm flex flex-col sm:flex-row sm:gap-4">
+									<span className="font-mono">{device.friendly_id}</span>
+									<span className="text-xs text-muted-foreground mt-1 sm:mt-0">MAC: {device.mac_address}</span>
+								</dd>
 							</div>
-							<div>
-								<dt className="text-sm font-medium text-muted-foreground">
-									MAC Address
-								</dt>
-								<dd className="text-sm">{device.mac_address}</dd>
-							</div>
+							
 							<div>
 								<dt className="text-sm font-medium text-muted-foreground">
 									Timezone
 								</dt>
 								<dd className="text-sm">{formatTimezone(device.timezone)}</dd>
 							</div>
-							<div>
-								<dt className="text-sm font-medium text-muted-foreground">
-									Last Update
-								</dt>
-								<dd className="text-sm">
-									{device.last_update_time
-										? formatDate(device.last_update_time)
-										: "Never"}
-								</dd>
-							</div>
-							<div>
-								<dt className="text-sm font-medium text-muted-foreground">
-									Firmware Version
-								</dt>
-								<dd className="text-sm">
-									{device.firmware_version || "Unknown"}
-								</dd>
-							</div>
-							<div>
-								<dt className="text-sm font-medium text-muted-foreground">
-									WiFi Signal Strength
-								</dt>
-								<dd className="text-sm">
-									{device.rssi
-										? `${device.rssi} dBm (${getSignalQuality(device.rssi)})`
-										: "Unknown"}
-								</dd>
-							</div>
-							<div>
-								<dt className="text-sm font-medium text-muted-foreground">
-									Last Refresh Duration
-								</dt>
-								<dd className="text-sm">
-									{device.last_refresh_duration
-										? `${device.last_refresh_duration} seconds`
-										: "Unknown"}
-								</dd>
-							</div>
-							<div>
-								<dt className="text-sm font-medium text-muted-foreground">
-									Next Expected Update
-								</dt>
-								<dd className="text-sm">
-									{device.next_expected_update
-										? formatDate(device.next_expected_update)
-										: "Unknown"}
-								</dd>
-							</div>
+							
 							{device.battery_voltage && (
-								<div className="col-span-1 md:col-span-2 lg:col-span-3">
+								<div className="col-span-1 md:col-span-2 lg:col-span-3 order-first md:order-none">
 									<dt className="text-sm font-medium text-muted-foreground">
 										Battery Status
 									</dt>
@@ -905,28 +872,31 @@ export default function DevicePage() {
 
 											return (
 												<div className="space-y-1">
-													<div className="flex items-center gap-2">
+													<div className="flex items-center gap-2 flex-wrap">
 														<div className="flex items-center">
 															<div className="relative w-10 h-5 border-1 border-primary rounded-sm p-0.5 overflow-hidden shadow-inner shadow-background/20">
 																<div
-																	className={`h-full rounded-[calc(var(--radius)-7px)] transition-all duration-300 ease-in-out ${batteryColor}`}
+																	className={`h-full rounded-[calc(var(--radius)-7px)] transition-all duration-300 ease-in-out ${batteryColor} flex items-center justify-center p-0 gap-0`}
 																	style={{
 																		width: `${batteryEstimate.batteryPercentage}%`,
 																	}}
-																/>
+																>{batteryEstimate.isCharging && <span className="bg-green-400 text-transparent bg-clip-text">⚡️</span>}</div>
 															</div>
 															{/* positive end of the battery */}
 															<div className="ml-[1px] h-2 w-0.5 bg-primary rounded-r-sm" />
 														</div>
 														<span className="text-sm font-medium">
-															{batteryEstimate.batteryPercentage}%
+															{batteryEstimate.isCharging
+																? "Charging"
+																: `${batteryEstimate.batteryPercentage}%`}
 														</span>
 														<span className="text-sm font-medium">
 															{device.battery_voltage.toFixed(2)}V
 														</span>
 														<span className="text-sm text-muted-foreground">
-															(~{batteryEstimate.remainingDays} days remaining
-															based on {refreshPerDay} refreshes per day)
+															{batteryEstimate.isCharging
+																? "can not estimate days remaining while charging"
+																: `~${batteryEstimate.remainingDays} days remaining based on ${refreshPerDay} refreshes per day`}
 														</span>
 													</div>
 												</div>
@@ -935,11 +905,50 @@ export default function DevicePage() {
 									</dd>
 								</div>
 							)}
+							
+							<div className="flex flex-col">
+								<dt className="text-sm font-medium text-muted-foreground">
+									WiFi Signal
+								</dt>
+								<dd className="text-sm">
+									{device.rssi
+										? `${device.rssi} dBm (${getSignalQuality(device.rssi)})`
+										: "Unknown"}
+								</dd>
+							</div>
+							
+							<div className="flex flex-col">
+								<dt className="text-sm font-medium text-muted-foreground">
+									Firmware
+								</dt>
+								<dd className="text-sm">
+									{device.firmware_version || "Unknown"}
+								</dd>
+							</div>
+							
+							<div className="flex flex-col">
+								<dt className="text-sm font-medium text-muted-foreground">
+									Refresh Info
+								</dt>
+								<dd className="text-sm flex flex-col">
+									<span>
+										{device.last_refresh_duration
+											? `Last duration: ${device.last_refresh_duration}s`
+											: "Unknown duration"}
+									</span>
+									<span className="text-xs text-muted-foreground mt-1">
+										Next update: {device.next_expected_update
+											? formatDate(device.next_expected_update)
+											: "Unknown"}
+									</span>
+								</dd>
+							</div>
+							
 							<div className="col-span-1 md:col-span-2 lg:col-span-3">
 								<AspectRatio ratio={16 / 9}>
 									<Image
-										src={`/api/bitmap/${editedDevice?.screen || "simple-text"}.bmp`}
-										overrideSrc={`/api/bitmap/${editedDevice?.screen || "simple-text"}.bmp`}
+										src={`/api/bitmap/${device?.screen || "simple-text"}.bmp`}
+										overrideSrc={`/api/bitmap/${device?.screen || "simple-text"}.bmp`}
 										alt="Device Screen"
 										fill
 										className="object-cover rounded-xs ring-2 ring-gray-200"
@@ -955,6 +964,6 @@ export default function DevicePage() {
 
 			{/* Device Logs */}
 			{device && !isLoading && <DeviceLogsContainer device={device} />}
-		</div>
+		</>
 	);
 }
