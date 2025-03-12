@@ -1,6 +1,6 @@
 # BYOS Next.js for TRMNL 🖥️
 
-This repo now has 2 copies, one under /ghcpuman902 and one under /usetrmnl. For issues, please use the /usetrmnl copy.
+This repo now has 2 copies, one under [ghcpuman902/byos-nextjs](https://github.com/ghcpuman902/byos-nextjs) and one under [usetrmnl/byos_next](https://github.com/usetrmnl/byos_next). For issues, please use the [usetrmnl/byos_next](https://github.com/usetrmnl/byos_next) copy.
 
 [![License](https://img.shields.io/github/license/ghcpuman902/byos-nextjs)](https://github.com/ghcpuman902/byos-nextjs/blob/main/LICENSE)
 [![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat&logo=next.js)](https://nextjs.org/)
@@ -8,9 +8,9 @@ This repo now has 2 copies, one under /ghcpuman902 and one under /usetrmnl. For 
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.0-38B2AC?style=flat&logo=tailwind-css)](https://tailwindcss.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-Integrated-3ECF8E?style=flat&logo=supabase)](https://supabase.com/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](https://github.com/trmnl/byos_next/pulls)
-[![GitHub Stars](https://img.shields.io/github/stars/trmnl/byos_next?style=social)](https://github.com/trmnl/byos_next/stargazers)
-[![GitHub Forks](https://img.shields.io/github/forks/trmnl/byos_next?style=social)](https://github.com/trmnl/byos_next/network/members)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](https://github.com/usetrmnl/byos_next/pulls)
+[![GitHub Stars](https://img.shields.io/github/stars/usetrmnl/byos_next?style=social)](https://github.com/usetrmnl/byos_next/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/usetrmnl/byos_next?style=social)](https://github.com/usetrmnl/byos_next/network/members)
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fghcpuman902%2Fbyos-nextjs&demo-title=BYOS%20Next.js&demo-description=Bring-Your-Own-Server%20built%20with%20Next.js%20for%20the%20TRMNL%20iot%20device&demo-url=https%3A%2F%2Fbyos-nextjs.vercel.app%2F&demo-image=https%3A%2F%2Fbyos-nextjs.vercel.app%2Fbyos-nextjs-screenshot.png&project-name=byos-nextjs&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22supabase%22%2C%22productSlug%22%3A%22supabase%22%7D%5D)
 
@@ -30,7 +30,8 @@ This repo now has 2 copies, one under /ghcpuman902 and one under /usetrmnl. For 
 **BYOS (Build Your Own Server) Next.js** is a community-maintained library for the TRMNL device, designed to provide a flexible and customizable server solution. This Next.js implementation offers a robust, modern approach to device management and display generation.
 
 ## ✨ Features
-![screenshot of the app](public/byos-nextjs-screenshot.png)
+![screenshot of byos-nextjs, overview page](public/byos-nextjs-overview.png)
+![screenshot of byos-nextjs, device page](public/byos-nextjs-device.png)
 
 live demo: [https://byos-nextjs.vercel.app/](https://byos-nextjs.vercel.app/)
 

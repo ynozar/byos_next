@@ -1,5 +1,7 @@
 export const revalidate = 60;
 
+export const runtime = "nodejs";
+
 import type { NextRequest } from "next/server";
 import { ImageResponse } from "next/og";
 import fs from "fs";
@@ -21,8 +23,14 @@ declare global {
 	var bitmapCache: Map<string, CacheItem> | undefined;
 }
 
-// Use the global bitmap cache
-const getBitmapCache = (): Map<string, CacheItem> => {
+// Use the global bitmap cache only in development
+const getBitmapCache = (): Map<string, CacheItem> | null => {
+	// In production, return null to use Next.js built-in caching
+	if (process.env.NODE_ENV === 'production') {
+		return null;
+	}
+	
+	// In development, use our global cache
 	if (!global.bitmapCache) {
 		global.bitmapCache = new Map<string, CacheItem>();
 	}
@@ -141,9 +149,11 @@ export async function GET(
 
 		console.log(`Bitmap request for: ${bitmapPath}`);
 		
-		// Check global cache first (if we should use cache)
+		// Get the bitmap cache (will be null in production)
 		const bitmapCache = getBitmapCache();
-		if (bitmapCache.has(cacheKey)) {
+		
+		// Only check cache in development
+		if (bitmapCache?.has(cacheKey)) {
 			const item = bitmapCache.get(cacheKey);
 			// Since we've checked with .has(), item should exist, but let's be safe
 			if (!item) {
@@ -173,7 +183,7 @@ export async function GET(
 				},
 			});
 
-			// Revalidate in background
+			// Revalidate in background with a fresh AbortController
 			setTimeout(() => {
 				console.log(`🔄 Background revalidation for ${cacheKey}`);
 				generateBitmap(bitmapPath, cacheKey);
@@ -182,7 +192,7 @@ export async function GET(
 			return staleResponse;
 		}
 
-		// Cache miss - generate the bitmap
+		// Cache miss or in production - generate the bitmap
 		return await generateBitmap(bitmapPath, cacheKey);
 	} catch (error) {
 		console.error("Error generating image:", error);
@@ -238,11 +248,14 @@ const generateBitmap = cache(async (bitmapPath: string, cacheKey: string) => {
 		const now = Date.now();
 		const expiresAt = now + revalidate * 1000;
 
-		// Cache the successful response
-		getBitmapCache().set(cacheKey, {
-			data: recipeBuffer,
-			expiresAt,
-		});
+		// Only cache in development
+		const bitmapCache = getBitmapCache();
+		if (bitmapCache) {
+			bitmapCache.set(cacheKey, {
+				data: recipeBuffer,
+				expiresAt,
+			});
+		}
 
 		console.log(`✅ Successfully generated bitmap for: ${bitmapPath}`);
 

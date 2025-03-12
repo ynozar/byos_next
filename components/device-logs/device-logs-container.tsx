@@ -36,7 +36,7 @@ export default function DeviceLogsContainer({
 	};
 
 	return (
-		<Card className="mt-6">
+		<Card className="mt-6 overflow-x-scroll">
 			<CardHeader>
 				<CardTitle className="text-base">Device Logs</CardTitle>
 				<CardDescription className="text-xs">

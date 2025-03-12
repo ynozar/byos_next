@@ -417,7 +417,7 @@ export default function MainLayout({
 						</Suspense>
 					</div>
 				</aside>
-				<main ref={mainRef} className="w-full max-w-6xl mx-auto p-2 md:p-4 lg:p-6">
+				<main ref={mainRef} className="w-full max-w-6xl p-2 md:p-4 lg:p-6">
 					{children}
 				</main>
 			</div>

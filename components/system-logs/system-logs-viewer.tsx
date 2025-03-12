@@ -240,7 +240,7 @@ export default function SystemLogsViewer({
 
 				<div className="flex flex-wrap items-center gap-2">
 					<Select value={sourceFilter} onValueChange={handleSourceChange}>
-						<SelectTrigger className="w-[180px]">
+						<SelectTrigger className="w-[100px]">
 							<SelectValue placeholder="Filter by source" />
 						</SelectTrigger>
 						<SelectContent>

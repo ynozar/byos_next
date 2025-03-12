@@ -963,7 +963,9 @@ export default function DevicePage() {
 			)}
 
 			{/* Device Logs */}
-			{device && !isLoading && <DeviceLogsContainer device={device} />}
+			<div className="w-full">
+				{device && !isLoading && <DeviceLogsContainer device={device} />}
+			</div>
 		</>
 	);
 }

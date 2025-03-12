@@ -26,8 +26,14 @@ declare global {
 	var pageBitmapCache: Map<string, CacheItem> | undefined;
 }
 
-// Use the global bitmap cache
-const getBitmapCache = (): Map<string, CacheItem> => {
+// Use the global bitmap cache only in development
+const getBitmapCache = (): Map<string, CacheItem> | null => {
+	// In production, return null to use Next.js built-in caching
+	if (process.env.NODE_ENV === 'production') {
+		return null;
+	}
+	
+	// In development, use our global cache
 	if (!global.pageBitmapCache) {
 		global.pageBitmapCache = new Map<string, CacheItem>();
 	}
@@ -150,8 +156,8 @@ const generateBitmap = cache(async (
 	const cacheKey = `page/bitmap/${slug}`;
 	const bitmapCache = getBitmapCache();
 	
-	// Check if we have a cached version
-	if (bitmapCache.has(cacheKey)) {
+	// Check if we have a cached version (only in development)
+	if (bitmapCache?.has(cacheKey)) {
 		const item = bitmapCache.get(cacheKey);
 		if (!item) {
 			console.log(`⚠️ Cache inconsistency for ${cacheKey}`);
@@ -167,7 +173,7 @@ const generateBitmap = cache(async (
 			// If stale, return it but trigger background revalidation
 			console.log(`🟡 Page cache STALE for ${cacheKey}`);
 			
-			// Revalidate in background
+			// Revalidate in background with a fresh context
 			setTimeout(() => {
 				console.log(`🔄 Background revalidation for ${cacheKey}`);
 				generateFreshBitmap(slug, Component, props, cacheKey);
@@ -177,7 +183,7 @@ const generateBitmap = cache(async (
 		}
 	}
 	
-	// Cache miss - generate the bitmap
+	// Cache miss or in production - generate the bitmap
 	return await generateFreshBitmap(slug, Component, props, cacheKey);
 });
 
@@ -199,15 +205,19 @@ const generateFreshBitmap = async (
 		
 		if (buffer) {
 			// Cache the successful response with 3 second expiration (max acceptable delay)
-			const now = Date.now();
-			const expiresAt = now + 3 * 1000; // 3 seconds
-			
-			getBitmapCache().set(cacheKey, {
-				data: buffer,
-				expiresAt,
-			});
-			
-			console.log(`✅ Successfully generated bitmap for: ${slug}`);
+			// Only in development
+			const bitmapCache = getBitmapCache();
+			if (bitmapCache) {
+				const now = Date.now();
+				const expiresAt = now + 3 * 1000; // 3 seconds
+				
+				bitmapCache.set(cacheKey, {
+					data: buffer,
+					expiresAt,
+				});
+				
+				console.log(`✅ Successfully generated bitmap for: ${slug}`);
+			}
 			return buffer;
 		}
 		return null;
