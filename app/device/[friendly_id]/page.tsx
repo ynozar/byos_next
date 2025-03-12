@@ -768,7 +768,7 @@ export default function DevicePage() {
 								</p>
 							</div>
 							<div className="w-full max-w-3xl">
-								<AspectRatio ratio={16 / 9}>
+								<AspectRatio ratio={5 / 3}>
 									<Image
 										src={`/api/bitmap/${editedDevice?.screen || "simple-text"}.bmp`}
 										overrideSrc={`/api/bitmap/${editedDevice?.screen || "simple-text"}.bmp`}
@@ -945,7 +945,7 @@ export default function DevicePage() {
 							</div>
 							
 							<div className="col-span-1 md:col-span-2 lg:col-span-3">
-								<AspectRatio ratio={16 / 9}>
+								<AspectRatio ratio={5 / 3}>
 									<Image
 										src={`/api/bitmap/${device?.screen || "simple-text"}.bmp`}
 										overrideSrc={`/api/bitmap/${device?.screen || "simple-text"}.bmp`}

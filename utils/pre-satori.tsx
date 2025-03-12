@@ -199,7 +199,7 @@ export const PreSatori: React.FC<PreSatoriProps> = ({ children, ...props }) => {
 					child.type === "span" ||
 					child.type === "div"
 				) {
-					const baseClasses = "text-[16px] m-0 p-0 border-0 outline-none bg-transparent shadow-none text-inherit font-inherit leading-none tracking-normal appearance-none select-none align-baseline list-none no-underline leading-none";
+					const baseClasses = "text-inherit m-0 p-0 border-0 outline-none bg-transparent shadow-none text-inherit font-inherit leading-none tracking-normal appearance-none select-none align-baseline list-none no-underline leading-none";
 					newProps.className = cn(baseClasses, className); // for tailwind engine on normal website rendering
 					remainingClassName.unshift(baseClasses); // for satori rendering
 				}
