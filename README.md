@@ -1,14 +1,14 @@
 # BYOS Next.js for TRMNL 🖥️
 
-[![License](https://img.shields.io/github/license/ghcpuman902/byos-nextjs)](https://github.com/ghcpuman902/byos-nextjs/blob/main/LICENSE)
+[![License](https://img.shields.io/github/license/usetrmnl/byos_next)](https://github.com/usetrmnl/byos_next/blob/main/LICENSE)
 [![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat&logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat&logo=react)](https://react.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.0-38B2AC?style=flat&logo=tailwind-css)](https://tailwindcss.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-Integrated-3ECF8E?style=flat&logo=supabase)](https://supabase.com/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](https://github.com/ghcpuman902/byos-nextjs/pulls)
-[![GitHub Stars](https://img.shields.io/github/stars/ghcpuman902/byos-nextjs?style=social)](https://github.com/ghcpuman902/byos-nextjs/stargazers)
-[![GitHub Forks](https://img.shields.io/github/forks/ghcpuman902/byos-nextjs?style=social)](https://github.com/ghcpuman902/byos-nextjs/network/members)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](https://github.com/usetrmnl/byos_next/pulls)
+[![GitHub Stars](https://img.shields.io/github/stars/usetrmnl/byos_next?style=social)](https://github.com/usetrmnl/byos_next/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/usetrmnl/byos_next?style=social)](https://github.com/usetrmnl/byos_next/network/members)
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fghcpuman902%2Fbyos-nextjs&demo-title=BYOS%20Next.js&demo-description=Bring-Your-Own-Server%20built%20with%20Next.js%20for%20the%20TRMNL%20iot%20device&demo-url=https%3A%2F%2Fbyos-nextjs.vercel.app%2F&demo-image=https%3A%2F%2Fbyos-nextjs.vercel.app%2Fbyos-nextjs-screenshot.png&project-name=byos-nextjs&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22supabase%22%2C%22productSlug%22%3A%22supabase%22%7D%5D)
 
@@ -68,7 +68,7 @@ This project is in the **Alpha** stage. Here's our development roadmap:
 ### Reporting Issues
 If you encounter any problems:
 
-1. **GitHub Issues**: Open an issue on our [GitHub repository](https://github.com/ghcpuman902/byos-nextjs/issues)
+1. **GitHub Issues**: Open an issue on our [GitHub repository](https://github.com/usetrmnl/byos_next/issues)
 2. **Email**: Send details to [manglekuo@gmail.com](mailto:manglekuo@gmail.com)
 3. **Discussions**: Reply to my message in the TRMNL Discord server
 
@@ -115,7 +115,7 @@ SUPABASE_URL
 #### Installation Steps
 ```bash
 # Clone the repository
-git clone https://github.com/ghcpuman902/byos-nextjs
+git clone https://github.com/usetrmnl/byos_next
 cd byos-nextjs
 
 # Install dependencies
