@@ -1,9 +1,13 @@
+import { cn } from "@/lib/utils";
 import React from "react";
 
 interface PreSatoriProps {
 	children: (
 		transform: (child: React.ReactNode) => React.ReactNode,
-		props: any,
+		props: Record<
+			string,
+			React.CSSProperties | string | undefined | React.ReactNode
+		>,
 	) => React.ReactNode;
 }
 
@@ -128,7 +132,6 @@ const ditherPatterns: Record<
 	},
 	"dither-1000": { background: "black", color: "white" },
 	dither: {
-		backgroundColor: "#000",
 		backgroundRepeat: "repeat",
 		imageRendering: "pixelated",
 	},
@@ -138,12 +141,22 @@ export const PreSatori: React.FC<PreSatoriProps> = ({ children, ...props }) => {
 	// Define a helper to recursively transform children.
 	const transform = (child: React.ReactNode): React.ReactNode => {
 		if (React.isValidElement(child)) {
-			const newProps: { [key: string]: any } = {};
+			const newProps: {
+				[key: string]:
+					| React.CSSProperties
+					| string
+					| undefined
+					| React.ReactNode;
+			} = {};
 			const { className, style, children, ...restProps } = child.props as {
 				className?: string;
 				style?: React.CSSProperties;
 				children?: React.ReactNode;
-				[key: string]: any;
+				[key: string]:
+					| React.CSSProperties
+					| string
+					| undefined
+					| React.ReactNode;
 			};
 
 			// Handle style props
@@ -156,25 +169,41 @@ export const PreSatori: React.FC<PreSatoriProps> = ({ children, ...props }) => {
 
 			// Process className for dither patterns
 			if (className) {
-				let remainingClassName = [];
+				const remainingClassName: string[] = [];
 				// Extract dither classes
 				const classes = className.split(" ");
 				// Check for dither classes and apply their styles
 				for (const cls of classes) {
-					if (cls === "dither" || cls.startsWith("dither-")) {
+					if (cls.startsWith("dither-")) {
 						if (ditherPatterns[cls]) {
 							// Apply dither pattern styles
 							newStyle = {
 								...newStyle,
 								...ditherPatterns[cls],
+								...ditherPatterns.dither, // Apply base dither styles
 							};
 						}
-					} else {
-						// Keep the remaining className for non-Satori rendering
-						remainingClassName.push(cls);
+					} else{
+						// Add non-dither classes to the front
+						remainingClassName.unshift(cls);
 					}
 				}
-				// Keep the remaining className for non-Satori rendering
+
+				if (
+					child.type === "h1" ||
+					child.type === "h2" ||
+					child.type === "h3" ||
+					child.type === "h4" ||
+					child.type === "h5" ||
+					child.type === "p" ||
+					child.type === "span" ||
+					child.type === "div"
+				) {
+					const baseClasses = "text-[16px] m-0 p-0 border-0 outline-none bg-transparent shadow-none text-inherit font-inherit leading-none tracking-normal appearance-none select-none align-baseline list-none no-underline leading-none";
+					newProps.className = cn(baseClasses, className); // for tailwind engine on normal website rendering
+					remainingClassName.unshift(baseClasses); // for satori rendering
+				}
+				// Set the transformed classes for satori rendering
 				newProps.tw = remainingClassName.join(" ");
 			}
 
@@ -202,6 +231,9 @@ export const PreSatori: React.FC<PreSatoriProps> = ({ children, ...props }) => {
 				width: "100%",
 				height: "100%",
 				fontFamily: "BlockKie",
+				lineHeight: 0,
+				color: "black",
+				fontSize: "16px",
 			}}
 		>
 			{children(transform, props)}

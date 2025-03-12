@@ -79,16 +79,29 @@ const loadRecipeBuffer = cache(async (recipeId: string) => {
 					const { default: fetchDataFunction } = await import(
 						`@/app/recipes/screens/${recipeId}/getData.ts`
 					);
-					const fetchedData = await fetchDataFunction();
+					
+					// Set a timeout for data fetching to prevent hanging
+					const fetchPromise = fetchDataFunction();
+					const timeoutPromise = new Promise((_, reject) => {
+						setTimeout(() => reject(new Error("Data fetch timeout")), 10000);
+					});
+					
+					// Race between the fetch and the timeout
+					const fetchedData = await Promise.race([fetchPromise, timeoutPromise])
+						.catch(error => {
+							console.warn(`Data fetch error for ${recipeId}:`, error);
+							return null;
+						});
 					
 					// Check if the fetched data is valid
 					if (fetchedData && typeof fetchedData === 'object') {
 						props = fetchedData;
 					} else {
-						console.warn(`Invalid data fetched for ${recipeId}`);
+						console.warn(`Invalid or missing data for ${recipeId}`);
 					}
 				} catch (error) {
-					console.warn(`Error fetching data for ${recipeId}:`, error);
+					console.warn(`Error in data fetching for ${recipeId}:`, error);
+					// Continue with default props
 				}
 			}
 			element = createElement(Component, { ...props });
@@ -128,23 +141,14 @@ export async function GET(
 
 		console.log(`Bitmap request for: ${bitmapPath}`);
 		
-		// Extract the recipe slug from the URL
-		const recipeSlug = bitmapPath.replace(".bmp", "");
-		
-		// Check if this is a recipe with data fetching
-		const hasDataFetch = screens[recipeSlug as keyof typeof screens]?.hasDataFetch === true;
-		
-		// For recipes with data fetching, we might want to skip the cache or use a shorter TTL
-		const shouldUseCache = !hasDataFetch || req.nextUrl.searchParams.get('nocache') !== 'true';
-		
 		// Check global cache first (if we should use cache)
 		const bitmapCache = getBitmapCache();
-		if (shouldUseCache && bitmapCache.has(cacheKey)) {
+		if (bitmapCache.has(cacheKey)) {
 			const item = bitmapCache.get(cacheKey);
 			// Since we've checked with .has(), item should exist, but let's be safe
 			if (!item) {
 				console.log(`⚠️ Cache inconsistency for ${cacheKey}`);
-				return await generateBitmap(bitmapPath, cacheKey, hasDataFetch);
+				return await generateBitmap(bitmapPath, cacheKey);
 			}
 
 			const now = Date.now();
@@ -172,14 +176,14 @@ export async function GET(
 			// Revalidate in background
 			setTimeout(() => {
 				console.log(`🔄 Background revalidation for ${cacheKey}`);
-				generateBitmap(bitmapPath, cacheKey, hasDataFetch);
+				generateBitmap(bitmapPath, cacheKey);
 			}, 0);
 
 			return staleResponse;
 		}
 
 		// Cache miss - generate the bitmap
-		return await generateBitmap(bitmapPath, cacheKey, hasDataFetch);
+		return await generateBitmap(bitmapPath, cacheKey);
 	} catch (error) {
 		console.error("Error generating image:", error);
 
@@ -210,7 +214,7 @@ export async function GET(
 
 // Helper function to generate and cache bitmap
 // Now using React's cache for the recipe buffer generation
-const generateBitmap = cache(async (bitmapPath: string, cacheKey: string, hasDataFetch = false) => {
+const generateBitmap = cache(async (bitmapPath: string, cacheKey: string) => {
 	// Extract the recipe slug from the URL
 	// Format: [recipe_slug].bmp
 	const recipeSlug = bitmapPath.replace(".bmp", "");
@@ -230,8 +234,7 @@ const generateBitmap = cache(async (bitmapPath: string, cacheKey: string, hasDat
 	const recipeBuffer = await loadRecipeBuffer(recipeId);
 
 	if (recipeBuffer) {
-		// For recipes with data fetching, use a shorter cache time or skip caching
-		const revalidate = hasDataFetch ? 30 : 60; // 30 seconds for data fetch recipes, 60 for others
+		const revalidate = 60;
 		const now = Date.now();
 		const expiresAt = now + revalidate * 1000;
 

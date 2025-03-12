@@ -18,7 +18,7 @@ export function useSearchWithDebounce(
 	createQueryString: (params: Record<string, string | number | null>) => string,
 	pathname: string,
 	router: { push: (url: string, options?: { scroll: boolean }) => void },
-	delay: number = 500,
+	delay = 500,
 ) {
 	// Use refs to avoid dependency issues with useCallback
 	const searchQueryRef = useRef(searchQuery);

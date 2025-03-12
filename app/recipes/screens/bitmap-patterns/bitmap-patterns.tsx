@@ -67,7 +67,7 @@ export default function BitmapPatterns() {
 									return (
 										<div
 											key={value}
-											className={`dither dither-${value}`}
+											className={`dither-${value}`}
 											style={{
 												width: `${size.w}px`,
 												height: `${size.h}px`,

@@ -1,6 +1,8 @@
+export const revalidate = 5;
+
 import fs from "fs";
 import path from "path";
-import { createElement, Suspense, use } from "react";
+import { createElement, Suspense, use, cache } from "react";
 import { ImageResponse } from "next/og";
 import { renderBmp } from "@/utils/render-bmp";
 import screens from "@/app/recipes/screens.json";
@@ -8,11 +10,39 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { RecipePreviewLayout } from "@/components/recipes/recipe-preview-layout";
+import RecipeProps from "@/components/recipes/recipe-props";
 import { revalidateTag } from "next/cache";
-import { Button } from "@/components/ui/button";
-import { RefreshCcw } from "lucide-react";
-// Load fonts as Buffer for Node.js as specified in Satori docs
-const loadFont = () => {
+import Link from "next/link";
+
+// Define types for our cache
+interface CacheItem {
+	data: Buffer;
+	expiresAt: number;
+}
+
+// Extend NodeJS namespace for global variables
+declare global {
+	// eslint-disable-next-line no-var
+	var pageBitmapCache: Map<string, CacheItem> | undefined;
+}
+
+// Use the global bitmap cache
+const getBitmapCache = (): Map<string, CacheItem> => {
+	if (!global.pageBitmapCache) {
+		global.pageBitmapCache = new Map<string, CacheItem>();
+	}
+	return global.pageBitmapCache;
+};
+
+// Server action for revalidating data
+async function refreshData(slug: string) {
+	'use server'
+	await new Promise(resolve => setTimeout(resolve, 500)); // Demo loading state
+	revalidateTag(slug);
+}
+
+// Load fonts as Buffer for Node.js as specified in Satori docs - using React's cache
+const loadFont = cache(() => {
 	try {
 		const blockKieFont = Buffer.from(
 			fs.readFileSync(path.resolve("./public/fonts/BlockKie.ttf")),
@@ -23,24 +53,44 @@ const loadFont = () => {
 		console.error("Error loading fonts:", error);
 		return null;
 	}
-};
+});
 
+// Cache the font at module initialization
 const blockKieFont = loadFont();
+
+// Cache the image options - executed once at module level
+const getImageOptions = cache(() => ({
+	width: 800,
+	height: 480,
+	fonts: [
+		...(blockKieFont
+			? [
+					{
+						name: "BlockKie",
+						data: blockKieFont,
+						weight: 400 as const,
+						style: "normal" as const,
+					},
+				]
+			: []),
+	],
+	debug: false,
+}));
 
 export async function generateStaticParams() {
 	return Object.keys(screens).map((slug) => ({ slug }));
 }
 
 // Separate data fetching functions for better Suspense support
-const fetchConfig = (slug: string) => {
+const fetchConfig = cache((slug: string) => {
 	const config = screens[slug as keyof typeof screens];
 	if (!config || (!config.published && process.env.NODE_ENV === "production")) {
 		return null;
 	}
 	return config;
-};
+});
 
-const fetchComponent = async (slug: string) => {
+const fetchComponent = cache(async (slug: string) => {
 	try {
 		const { default: Component } = await import(
 			`@/app/recipes/screens/${slug}/${slug}.tsx`
@@ -50,9 +100,9 @@ const fetchComponent = async (slug: string) => {
 		console.error(`Error loading component for ${slug}:`, error);
 		return null;
 	}
-};
+});
 
-const fetchProps = async (
+const fetchProps = cache(async (
 	slug: string,
 	config: (typeof screens)[keyof typeof screens],
 ) => {
@@ -62,44 +112,105 @@ const fetchProps = async (
 			const { default: fetchDataFunction } = await import(
 				`@/app/recipes/screens/${slug}/getData.ts`
 			);
-			props = await fetchDataFunction();
+			
+			// Set a timeout for data fetching to prevent hanging
+			const fetchPromise = fetchDataFunction();
+			const timeoutPromise = new Promise((_, reject) => {
+				setTimeout(() => reject(new Error("Data fetch timeout")), 10000);
+			});
+			
+			// Race between the fetch and the timeout
+			const fetchedData = await Promise.race([fetchPromise, timeoutPromise])
+				.catch(error => {
+					console.warn(`Data fetch error for ${slug}:`, error);
+					return null;
+				});
+			
+			// Check if the fetched data is valid
+			if (fetchedData && typeof fetchedData === 'object') {
+				props = fetchedData;
+			} else {
+				console.warn(`Invalid or missing data for ${slug}`);
+			}
 		} catch (error) {
 			console.error(`Error fetching data for ${slug}:`, error);
 		}
 	}
 	return props;
-};
+});
 
-const generateBitmap = async (
+// Non-blocking bitmap generation with caching
+const generateBitmap = cache(async (
+	slug: string,
 	Component: React.ComponentType<
 		(typeof screens)[keyof typeof screens]["props"]
 	>,
 	props: (typeof screens)[keyof typeof screens]["props"],
 ) => {
-	try {
-		const santoriOptions = {
-			width: 800,
-			height: 480,
-			fonts: [
-				...(blockKieFont
-					? [
-							{
-								name: "BlockKie",
-								data: blockKieFont,
-								weight: 400 as const,
-								style: "normal" as const,
-							},
-						]
-					: []),
-			],
-			debug: false,
-		};
+	const cacheKey = `page/bitmap/${slug}`;
+	const bitmapCache = getBitmapCache();
+	
+	// Check if we have a cached version
+	if (bitmapCache.has(cacheKey)) {
+		const item = bitmapCache.get(cacheKey);
+		if (!item) {
+			console.log(`⚠️ Cache inconsistency for ${cacheKey}`);
+		} else {
+			const now = Date.now();
+			
+			// If the item is still valid, return it
+			if (item.expiresAt > now) {
+				console.log(`🔵 Page cache HIT for ${cacheKey}`);
+				return item.data;
+			}
+			
+			// If stale, return it but trigger background revalidation
+			console.log(`🟡 Page cache STALE for ${cacheKey}`);
+			
+			// Revalidate in background
+			setTimeout(() => {
+				console.log(`🔄 Background revalidation for ${cacheKey}`);
+				generateFreshBitmap(slug, Component, props, cacheKey);
+			}, 0);
+			
+			return item.data;
+		}
+	}
+	
+	// Cache miss - generate the bitmap
+	return await generateFreshBitmap(slug, Component, props, cacheKey);
+});
 
+// Helper function to generate and cache a fresh bitmap
+const generateFreshBitmap = async (
+	slug: string,
+	Component: React.ComponentType<
+		(typeof screens)[keyof typeof screens]["props"]
+	>,
+	props: (typeof screens)[keyof typeof screens]["props"],
+	cacheKey: string
+) => {
+	try {
 		const pngResponse = await new ImageResponse(
 			createElement(Component, props),
-			santoriOptions,
+			getImageOptions()
 		);
-		return await renderBmp(pngResponse);
+		const buffer = await renderBmp(pngResponse);
+		
+		if (buffer) {
+			// Cache the successful response with 3 second expiration (max acceptable delay)
+			const now = Date.now();
+			const expiresAt = now + 3 * 1000; // 3 seconds
+			
+			getBitmapCache().set(cacheKey, {
+				data: buffer,
+				expiresAt,
+			});
+			
+			console.log(`✅ Successfully generated bitmap for: ${slug}`);
+			return buffer;
+		}
+		return null;
 	} catch (error) {
 		console.error("Error generating bitmap:", error);
 		return null;
@@ -123,44 +234,14 @@ const BitmapImage = ({
 	);
 };
 
-// Component to render the component props
-const RecipeProps = ({
-	props,
-	slug,
-}: {
-	props: (typeof screens)[keyof typeof screens]["props"];
-	slug: string;
-}) => {
-	if (Object.keys(props).length === 0) return null;
-
-	async function refreshData() {
-		"use server";
-		revalidateTag(slug);
-	}
-	return (
-		<div className="mt-8">
-			<form
-				action={refreshData}
-				className="flex flex-row gap-2 items-center mb-4"
-			>
-				<h2 className="text-xl font-semibold">Recipe Props</h2>
-				<Button type="submit">
-					<RefreshCcw className="size-4" />
-				</Button>
-			</form>
-			<pre className="p-4 rounded-md overflow-x-auto bg-muted">
-				{JSON.stringify(props, null, 2)}
-			</pre>
-		</div>
-	);
-};
-
 // Component to render the bitmap with Suspense
 const SuspendedBitmap = ({
+	slug,
 	Component,
 	props,
 	title,
 }: {
+	slug: string;
 	Component: React.ComponentType<
 		(typeof screens)[keyof typeof screens]["props"]
 	>;
@@ -168,7 +249,7 @@ const SuspendedBitmap = ({
 	title: string;
 }) => {
 	// Create a promise for the bitmap generation
-	const bmpPromise = generateBitmap(Component, props);
+	const bmpPromise = generateBitmap(slug, Component, props);
 	const bmpBuffer = use(bmpPromise);
 
 	if (!bmpBuffer) {
@@ -221,7 +302,7 @@ const RecipeContent = ({ slug }: { slug: string }) => {
 
 				<RecipePreviewLayout>
 					<div className="flex flex-col gap-0 mb-2">
-						<div className="w-[800px] h-[480px] ring-2 ring-gray-200 rounded-xs">
+						<div className="w-[800px] h-[480px] border border-gray-200 overflow-hidden rounded-sm">
 							<AspectRatio ratio={5 / 3}>
 								<Suspense
 									fallback={
@@ -231,6 +312,7 @@ const RecipeContent = ({ slug }: { slug: string }) => {
 									}
 								>
 									<SuspendedBitmap
+										slug={slug}
 										Component={Component}
 										props={props}
 										title={config.title}
@@ -238,10 +320,10 @@ const RecipeContent = ({ slug }: { slug: string }) => {
 								</Suspense>
 							</AspectRatio>
 						</div>
-						<p className="leading-7">Bitmap rendering of the recipe</p>
+						<p className="leading-7"><Link href={`/api/bitmap/${slug}.bmp`}>/api/bitmap/{slug}.bmp</Link></p>
 					</div>
 					<div className="flex flex-col gap-0">
-						<div className="w-[800px] h-[480px] ring-2 ring-gray-200 rounded-xs">
+						<div className="w-[800px] h-[480px] border border-gray-200 overflow-hidden rounded-sm">
 							<AspectRatio ratio={5 / 3} className="w-[800px] h-[480px]">
 								<Suspense
 									fallback={
@@ -254,7 +336,7 @@ const RecipeContent = ({ slug }: { slug: string }) => {
 								</Suspense>
 							</AspectRatio>
 						</div>
-						<p className="leading-7">Direct rendering of the recipe</p>
+						<p className="leading-7">/recipes/screens/{slug}/{slug}.tsx</p>
 					</div>
 				</RecipePreviewLayout>
 
@@ -266,7 +348,11 @@ const RecipeContent = ({ slug }: { slug: string }) => {
 							</div>
 						}
 					>
-						<RecipeProps props={props} slug={slug} />
+						<RecipeProps 
+							props={props} 
+							slug={slug} 
+							refreshAction={refreshData}
+						/>
 					</Suspense>
 				)}
 			</div>
