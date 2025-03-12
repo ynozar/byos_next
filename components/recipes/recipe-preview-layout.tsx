@@ -60,7 +60,7 @@ const LayoutToggle = React.forwardRef<HTMLDivElement, LayoutToggleProps>(
 
 LayoutToggle.displayName = "LayoutToggle";
 
-const ScreenPreviewLayout = ({ children }: { children: React.ReactNode }) => {
+const RecipePreviewLayout = ({ children }: { children: React.ReactNode }) => {
 	const [layout, setLayout] = React.useState<"columns" | "rows">("columns");
 
 	return (
@@ -78,6 +78,6 @@ const ScreenPreviewLayout = ({ children }: { children: React.ReactNode }) => {
 	);
 };
 
-ScreenPreviewLayout.displayName = "ScreenPreviewLayout";
+RecipePreviewLayout.displayName = "RecipePreviewLayout";
 
-export { ScreenPreviewLayout };
+export { RecipePreviewLayout };

@@ -34,7 +34,7 @@ function getFallbackArticle(): string {
 /**
  * Internal function to fetch and process Wikipedia data
  */
-async function getWikipediaArticle(): Promise<WikipediaData | string> {
+async function getWikipediaArticle(): Promise<WikipediaData | null> {
 	try {
 		// Try to get a random article
 		const response = await fetch(
@@ -95,7 +95,7 @@ async function getWikipediaArticle(): Promise<WikipediaData | string> {
 				};
 			} catch (fallbackError) {
 				console.log("Fallback error details:", fallbackError);
-				return "Error: Unable to fetch Wikipedia data.";
+				return null;
 			}
 		}
 
@@ -110,16 +110,42 @@ async function getWikipediaArticle(): Promise<WikipediaData | string> {
 		};
 	} catch (error) {
 		console.error("Error details:", error);
-		return "Error: Unable to fetch Wikipedia data.";
+		return null;
 	}
 }
 
 /**
- * Cached function that serves as the entry point for fetching Wikipedia data
+ * Function that fetches Wikipedia data without caching
  */
-export default unstable_cache(
-	async (): Promise<WikipediaData | string> => {
-		return getWikipediaArticle();
+async function fetchWikipediaData(): Promise<WikipediaData> {
+	const data = await getWikipediaArticle();
+	
+	// If data is null or empty, return a default object
+	if (!data || !data.title || !data.extract) {
+		return {
+			title: "Unable to fetch Wikipedia data",
+			extract: "There was an error retrieving the article. Please try again later.",
+			thumbnail: undefined
+		};
+	}
+	
+	return data;
+}
+
+/**
+ * Cached function that serves as the entry point for fetching Wikipedia data
+ * Only caches valid responses
+ */
+const getCachedWikipediaData = unstable_cache(
+	async (): Promise<WikipediaData> => {
+		const data = await getWikipediaArticle();
+		
+		// If data is null or empty, throw an error to prevent caching
+		if (!data || !data.title || !data.extract) {
+			throw new Error("Empty or invalid data - skip caching");
+		}
+		
+		return data;
 	},
 	["wikipedia-random-article"],
 	{
@@ -127,3 +153,17 @@ export default unstable_cache(
 		revalidate: 600, // Cache for 10 minutes
 	},
 );
+
+/**
+ * Main export function that tries to use cached data but falls back to non-cached data if needed
+ */
+export default async function getData(): Promise<WikipediaData> {
+	try {
+		// Try to get cached data first
+		return await getCachedWikipediaData();
+	} catch (error) {
+		console.log("Cache skipped or error:", error);
+		// Fall back to non-cached data
+		return fetchWikipediaData();
+	}
+}

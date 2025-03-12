@@ -21,7 +21,7 @@ import {
 	formatTimezone,
 } from "@/utils/helpers";
 import { cn } from "@/lib/utils";
-import screens from "@/app/examples/screens.json";
+import screens from "@/app/recipes/screens.json";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -815,7 +815,7 @@ export default function DevicePage() {
 									Status
 								</dt>
 								<dd className="text-sm flex items-center gap-2">
-									<span className={`inline-block w-2 h-2 rounded-full ${device.status === "online" ? "bg-green-500" : "bg-red-500"}`}></span>
+									<span className={`inline-block w-2 h-2 rounded-full ${device.status === "online" ? "bg-green-500" : "bg-red-500"}`} />
 									<span className="text-box capitalize">{device.status}</span>
 									{device.last_update_time && (
 										<span className="text-muted-foreground">

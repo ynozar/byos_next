@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import screens from "@/app/examples/screens.json";
+import screens from "@/app/recipes/screens.json";
 import Image from "next/image";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Badge } from "@/components/ui/badge";
@@ -40,14 +40,14 @@ const ComponentPreview = ({
 };
 
 // Component for a single card
-const ComponentCard = ({
+const RecipeCard = ({
 	slug,
 	config,
 }: { slug: string; config: (typeof screens)[keyof typeof screens] }) => {
 	return (
 		<Link
 			key={slug}
-			href={`/examples/${slug}`}
+			href={`/recipes/${slug}`}
 			className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow group flex flex-col h-full"
 		>
 			<ComponentPreview slug={slug} config={config} />
@@ -94,15 +94,15 @@ const CategorySection = ({
 			</h3>
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 				{components.map(([slug, config]) => (
-					<ComponentCard key={slug} slug={slug} config={config} />
+					<RecipeCard key={slug} slug={slug} config={config} />
 				))}
 			</div>
 		</div>
 	);
 };
 
-// Main component that organizes components by category
-const ComponentsGrid = () => {
+// Main component that organizes recipes by category
+const RecipesGrid = () => {
 	const publishedComponents = getPublishedComponents();
 
 	// Group components by category
@@ -137,29 +137,18 @@ const ComponentsGrid = () => {
 	);
 };
 
-export default function ExamplesIndex() {
+export default function RecipesIndex() {
 	return (
-		<>
-			<div className="mb-6">
-				<h2 className="mt-10 scroll-m-20 pb-2 text-3xl font-semibold tracking-tight transition-colors first:mt-0">
-					Screen Examples
-				</h2>
-				<p className="text-muted-foreground max-w-prose">
-					Explore and test screens in both their direct rendering and bitmap
-					rendering forms. This examples page is designed to help develop and
-					test react components for your TRMNL device. Copy the folder of any of
-					these examples and update screens.json with the correct details, and
-					use edit device to assign the screen to your device.
+		<div className="space-y-6">
+			<div className="space-y-2">
+				<h1 className="text-3xl font-bold">Recipes</h1>
+				<p className="text-muted-foreground">
+					Browse and customize ready-to-use recipes for your TRMNL device.
 				</p>
 			</div>
-
-			<Suspense
-				fallback={
-					<div className="w-full text-center">Loading components...</div>
-				}
-			>
-				<ComponentsGrid />
+			<Suspense fallback={<div>Loading recipes...</div>}>
+				<RecipesGrid />
 			</Suspense>
-		</>
+		</div>
 	);
 }

@@ -6,8 +6,8 @@ import fs from "fs";
 import path from "path";
 import { createElement, cache } from "react";
 import { renderBmp, DISPLAY_BMP_IMAGE_SIZE } from "@/utils/render-bmp";
-import NotFoundScreen from "@/app/examples/screens/not-found/not-found";
-import screens from "@/app/examples/screens.json";
+import NotFoundScreen from "@/app/recipes/screens/not-found/not-found";
+import screens from "@/app/recipes/screens.json";
 
 // Define types for our cache
 interface CacheItem {
@@ -61,37 +61,46 @@ const getImageOptions = cache(() => ({
 	debug: false,
 }));
 
-// Helper function to load a screen component - now using React's cache
-const loadScreenBuffer = cache(async (screenId: string) => {
+// Helper function to load a recipe component - now using React's cache
+const loadRecipeBuffer = cache(async (recipeId: string) => {
 	try {
-		// Check if the screen exists in our components registry
+		// Check if the recipe exists in our components registry
 		let element: React.ReactNode;
-		if (screens[screenId as keyof typeof screens]) {
+		if (screens[recipeId as keyof typeof screens]) {
 			const { default: Component } = await import(
-				`@/app/examples/screens/${screenId}/${screenId}.tsx`
+				`@/app/recipes/screens/${recipeId}/${recipeId}.tsx`
 			);
-			console.log(`Screen component loaded: ${screenId}`);
-			let props = screens[screenId as keyof typeof screens].props || {};
-			if (screens[screenId as keyof typeof screens].hasDataFetch) {
+			console.log(`Recipe component loaded: ${recipeId}`);
+			let props = screens[recipeId as keyof typeof screens].props || {};
+			
+			// Handle data fetching recipes
+			if (screens[recipeId as keyof typeof screens].hasDataFetch) {
 				try {
 					const { default: fetchDataFunction } = await import(
-						`@/app/examples/screens/${screenId}/getData.ts`
+						`@/app/recipes/screens/${recipeId}/getData.ts`
 					);
-					props = await fetchDataFunction();
+					const fetchedData = await fetchDataFunction();
+					
+					// Check if the fetched data is valid
+					if (fetchedData && typeof fetchedData === 'object') {
+						props = fetchedData;
+					} else {
+						console.warn(`Invalid data fetched for ${recipeId}`);
+					}
 				} catch (error) {
-					console.warn(`Error fetching data for ${screenId}:`, error);
+					console.warn(`Error fetching data for ${recipeId}:`, error);
 				}
 			}
 			element = createElement(Component, { ...props });
 		} else {
-			// If screen component not found, use the NotFoundScreen
-			element = createElement(NotFoundScreen, { slug: screenId });
+			// If recipe component not found, use the NotFoundScreen
+			element = createElement(NotFoundScreen, { slug: recipeId });
 		}
 
 		const pngResponse = await new ImageResponse(element, getImageOptions());
 		return await renderBmp(pngResponse);
 	} catch (error) {
-		console.error(`Error loading screen component ${screenId}:`, error);
+		console.error(`Error loading recipe component ${recipeId}:`, error);
 		return null;
 	}
 });
@@ -118,15 +127,24 @@ export async function GET(
 		const cacheKey = `api/bitmap/${bitmapPath}`;
 
 		console.log(`Bitmap request for: ${bitmapPath}`);
-
-		// Check global cache first
+		
+		// Extract the recipe slug from the URL
+		const recipeSlug = bitmapPath.replace(".bmp", "");
+		
+		// Check if this is a recipe with data fetching
+		const hasDataFetch = screens[recipeSlug as keyof typeof screens]?.hasDataFetch === true;
+		
+		// For recipes with data fetching, we might want to skip the cache or use a shorter TTL
+		const shouldUseCache = !hasDataFetch || req.nextUrl.searchParams.get('nocache') !== 'true';
+		
+		// Check global cache first (if we should use cache)
 		const bitmapCache = getBitmapCache();
-		if (bitmapCache.has(cacheKey)) {
+		if (shouldUseCache && bitmapCache.has(cacheKey)) {
 			const item = bitmapCache.get(cacheKey);
 			// Since we've checked with .has(), item should exist, but let's be safe
 			if (!item) {
 				console.log(`⚠️ Cache inconsistency for ${cacheKey}`);
-				return await generateBitmap(bitmapPath, cacheKey);
+				return await generateBitmap(bitmapPath, cacheKey, hasDataFetch);
 			}
 
 			const now = Date.now();
@@ -154,14 +172,14 @@ export async function GET(
 			// Revalidate in background
 			setTimeout(() => {
 				console.log(`🔄 Background revalidation for ${cacheKey}`);
-				generateBitmap(bitmapPath, cacheKey);
+				generateBitmap(bitmapPath, cacheKey, hasDataFetch);
 			}, 0);
 
 			return staleResponse;
 		}
 
 		// Cache miss - generate the bitmap
-		return await generateBitmap(bitmapPath, cacheKey);
+		return await generateBitmap(bitmapPath, cacheKey, hasDataFetch);
 	} catch (error) {
 		console.error("Error generating image:", error);
 
@@ -191,41 +209,41 @@ export async function GET(
 }
 
 // Helper function to generate and cache bitmap
-// Now using React's cache for the screen buffer generation
-const generateBitmap = cache(async (bitmapPath: string, cacheKey: string) => {
-	// Extract the screen slug from the URL
-	// Format: [screen_slug].bmp
-	const screenSlug = bitmapPath.replace(".bmp", "");
+// Now using React's cache for the recipe buffer generation
+const generateBitmap = cache(async (bitmapPath: string, cacheKey: string, hasDataFetch = false) => {
+	// Extract the recipe slug from the URL
+	// Format: [recipe_slug].bmp
+	const recipeSlug = bitmapPath.replace(".bmp", "");
 
-	// Default to 'simple-text' if no screen is specified
-	let screenId = "simple-text";
+	// Default to 'simple-text' if no recipe is specified
+	let recipeId = "simple-text";
 
-	// Check if the requested screen exists in our screens registry
-	if (screens[screenSlug as keyof typeof screens]) {
-		screenId = screenSlug;
-		console.log(`Screen found: ${screenSlug}`);
+	// Check if the requested recipe exists in our screens registry
+	if (screens[recipeSlug as keyof typeof screens]) {
+		recipeId = recipeSlug;
+		console.log(`Recipe found: ${recipeSlug}`);
 	} else {
-		console.log(`Screen not found: ${screenSlug}, using default`);
+		console.log(`Recipe not found: ${recipeSlug}, using default`);
 	}
 
-	// Try to load the screen component using our cached function
-	const screenBuffer = await loadScreenBuffer(screenId);
+	// Try to load the recipe component using our cached function
+	const recipeBuffer = await loadRecipeBuffer(recipeId);
 
-	if (screenBuffer) {
-		// Store in global cache
-		const revalidate = 60; // Default to 60 seconds
+	if (recipeBuffer) {
+		// For recipes with data fetching, use a shorter cache time or skip caching
+		const revalidate = hasDataFetch ? 30 : 60; // 30 seconds for data fetch recipes, 60 for others
 		const now = Date.now();
 		const expiresAt = now + revalidate * 1000;
 
 		// Cache the successful response
 		getBitmapCache().set(cacheKey, {
-			data: screenBuffer,
+			data: recipeBuffer,
 			expiresAt,
 		});
 
 		console.log(`✅ Successfully generated bitmap for: ${bitmapPath}`);
 
-		return new Response(screenBuffer, {
+		return new Response(recipeBuffer, {
 			headers: {
 				"Content-Type": "image/bmp",
 				"Content-Length": DISPLAY_BMP_IMAGE_SIZE.toString(),
@@ -233,5 +251,5 @@ const generateBitmap = cache(async (bitmapPath: string, cacheKey: string) => {
 		});
 	}
 
-	throw new Error("Failed to generate screen buffer");
+	throw new Error("Failed to generate recipe buffer");
 });

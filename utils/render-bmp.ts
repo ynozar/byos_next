@@ -11,6 +11,19 @@ export async function renderBmp(pngResponse: ImageResponse) {
 	const image = await Jimp.read(Buffer.from(pngBuffer));
 	const { data } = image.bitmap;
 
+	// Bayer dithering matrix 8x8 for improved monochrome rendering
+	// Values are normalized to 0-63 range for efficient threshold comparison
+	const bayerPattern = [
+		[0, 32, 8, 40, 2, 34, 10, 42],
+		[48, 16, 56, 24, 50, 18, 58, 26],
+		[12, 44, 4, 36, 14, 46, 6, 38],
+		[60, 28, 52, 20, 62, 30, 54, 22],
+		[3, 35, 11, 43, 1, 33, 9, 41],
+		[51, 19, 59, 27, 49, 17, 57, 25],
+		[15, 47, 7, 39, 13, 45, 5, 37],
+		[63, 31, 55, 23, 61, 29, 53, 21],
+	];
+	
 	// Fixed dimensions to match the device requirements
 	const width = 800;
 	const height = 480;
@@ -50,7 +63,7 @@ export async function renderBmp(pngResponse: ImageResponse) {
 	buffer.writeUInt32LE(0x00ffffff, paletteOffset); // White
 	buffer.writeUInt32LE(0x00000000, paletteOffset + 4); // Black
 
-	// Pixel Data - Convert to 1-bit monochrome
+	// Pixel Data - Convert to 1-bit monochrome using Bayer dithering
 	const dataOffset = fileHeaderSize + infoHeaderSize + paletteSize;
 	for (let y = 0; y < height; y++) {
 		for (let x = 0; x < width; x += 8) {
@@ -62,9 +75,21 @@ export async function renderBmp(pngResponse: ImageResponse) {
 					data[srcPos] * 0.3 +
 					data[srcPos + 1] * 0.59 +
 					data[srcPos + 2] * 0.11;
-				// Set bit if pixel is dark
-				if (gray < 128) {
+				
+				// First check if this is a pure black or white pixel
+				if (gray < 100) {
+					// Pure black pixel
 					byte |= 1 << (7 - bit);
+				} else if (gray === 255) {
+					// Pure white pixel - do nothing (bit stays 0)
+				} else {
+					// For grayscale pixels, apply Bayer dithering
+					const thresholdValue = bayerPattern[y % 8][(x + bit) % 8];
+					const normalizedGray = Math.floor(gray * 64 / 255);
+					
+					if (normalizedGray <= thresholdValue) {
+						byte |= 1 << (7 - bit);
+					}
 				}
 			}
 			const destPos = dataOffset + (y * rowSize + Math.floor(x / 8));

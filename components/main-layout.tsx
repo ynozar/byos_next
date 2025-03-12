@@ -26,7 +26,7 @@ import { StatusIndicator } from "@/components/ui/status-indicator";
 import type { Device } from "@/lib/supabase/types";
 import { getDeviceStatus } from "@/utils/helpers";
 import Link from "next/link";
-import screens from "@/app/examples/screens.json";
+import screens from "@/app/recipes/screens.json";
 import { useTheme } from "next-themes";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -44,7 +44,7 @@ const DeviceListFallback = () => (
 	</div>
 );
 
-const ExamplesListFallback = () => (
+const RecipesListFallback = () => (
 	<div className="pl-6 space-y-2">
 		<div className="flex items-center w-full py-1">
 			<Skeleton className="h-5 w-[70%] rounded-md" />
@@ -75,7 +75,7 @@ const SidebarSkeletonFallback = () => (
 			<Skeleton className="size-4 rounded-md" />
 		</div>
 
-		{/* Examples section */}
+		{/* Recipes section */}
 		<div className="w-full h-9 flex items-center justify-between">
 			<div className="flex items-center">
 				<Skeleton className="size-4 mr-2 rounded-md" />
@@ -136,8 +136,8 @@ const DeviceList = ({
 	);
 };
 
-// Examples list component to wrap in Suspense
-const ExamplesList = ({
+// Recipes list component to wrap in Suspense
+const RecipesList = ({
 	components,
 	isActiveExamplesPath,
 	isActivePath,
@@ -151,11 +151,11 @@ const ExamplesList = ({
 			<Button
 				variant="ghost"
 				size="sm"
-				className={`w-full justify-start space-x-0 text-sm h-8 ${isActivePath("/examples") ? "bg-muted" : ""}`}
+				className={`w-full justify-start space-x-0 text-sm h-8 ${isActivePath("/recipes") ? "bg-muted" : ""}`}
 				asChild
 			>
-				<Link href="/examples">
-					<span className="truncate text-xs">All Components</span>
+				<Link href="/recipes">
+					<span className="truncate text-xs">All Recipes</span>
 				</Link>
 			</Button>
 
@@ -167,7 +167,7 @@ const ExamplesList = ({
 					className={`w-full justify-start space-x-0 text-sm h-8 ${isActiveExamplesPath(slug) ? "bg-muted" : ""}`}
 					asChild
 				>
-					<Link href={`/examples/${slug}`}>
+					<Link href={`/recipes/${slug}`}>
 						<span className="truncate text-xs">{config.title}</span>
 					</Link>
 				</Button>
@@ -198,10 +198,10 @@ export default function MainLayout({
 	const isActivePath = (path: string) => pathname === path;
 	const isActiveDevicePath = (friendly_id: string) =>
 		pathname === `/device/${friendly_id}`;
-	const isActiveExamplesPath = (slug: string) =>
-		pathname === `/examples/${slug}`;
-	const isExamplesPath =
-		pathname === "/examples" || pathname.startsWith("/examples/");
+	const isActiveRecipePath = (slug: string) =>
+		pathname === `/recipes/${slug}`;
+	const isRecipesPath =
+		pathname === "/recipes" || pathname.startsWith("/recipes/");
 
 	// Toggle theme
 	const toggleTheme = () => {
@@ -234,8 +234,8 @@ export default function MainLayout({
 			setIsDevicesOpen(true);
 		}
 
-		// Open examples section if a examples page is active
-		if (pathname.startsWith("/examples/")) {
+		// Open recipes section if a recipes page is active
+		if (pathname.startsWith("/recipes/")) {
 			setIsExamplesOpen(true);
 		}
 	}, [pathname]);
@@ -246,8 +246,8 @@ export default function MainLayout({
 		status: getDeviceStatus(device),
 	}));
 
-	// Get examples components
-	const examplesComponents = Object.entries(screens)
+	// Get recipes components
+	const recipesComponents = Object.entries(screens)
 		.filter(
 			([, config]) => process.env.NODE_ENV !== "production" || config.published,
 		)
@@ -368,11 +368,11 @@ export default function MainLayout({
 									<CollapsibleTrigger asChild>
 										<Button
 											variant="ghost"
-											className={`w-full justify-between text-sm h-9 ${isExamplesPath ? "bg-muted" : ""}`}
+											className={`w-full justify-between text-sm h-9 ${isRecipesPath ? "bg-muted" : ""}`}
 										>
 											<div className="flex items-center">
 												<Palette className="mr-2 size-4" />
-												Examples
+												Recipes
 											</div>
 											{isExamplesOpen ? (
 												<ChevronDown className="size-4" />
@@ -382,10 +382,10 @@ export default function MainLayout({
 										</Button>
 									</CollapsibleTrigger>
 									<CollapsibleContent className="pl-6 space-y-1">
-										<Suspense fallback={<ExamplesListFallback />}>
-											<ExamplesList
-												components={examplesComponents}
-												isActiveExamplesPath={isActiveExamplesPath}
+										<Suspense fallback={<RecipesListFallback />}>
+											<RecipesList
+												components={recipesComponents}
+												isActiveExamplesPath={isActiveRecipePath}
 												isActivePath={isActivePath}
 											/>
 										</Suspense>

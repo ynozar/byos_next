@@ -4,7 +4,7 @@
 		"published": true,
 		"createdAt": "2025-03-01T00:00:00Z",
 		"updatedAt": "2025-03-01T00:00:00Z",
-		"description": "A simple text component. Edit this screen at /app/screens/simple-text/simple-text.tsx",
+		"description": "A simple text component. Edit this recipe at /app/recipes/screens/simple-text/simple-text.tsx",
 		"componentPath": "./screens/simple-text",
 		"hasDataFetch": false,
 		"props": {},
@@ -21,7 +21,7 @@
 		"published": true,
 		"createdAt": "2025-03-01T00:00:00Z",
 		"updatedAt": "2025-03-01T00:00:00Z",
-		"description": "A simple album screen. Edit this screen at /app/screens/album/album.tsx",
+		"description": "A simple album recipe. Edit this recipe at /app/recipes/screens/album/album.tsx",
 		"componentPath": "./screens/album",
 		"hasDataFetch": false,
 		"props": {},
@@ -38,7 +38,7 @@
 		"published": true,
 		"createdAt": "2025-03-01T00:00:00Z",
 		"updatedAt": "2025-03-01T00:00:00Z",
-		"description": "Demonstrating using custom classes to create bitmap patterns. See /utils/pre-satori.ts for more details. Edit this screen at /app/screens/bitmap-patterns.tsx",
+		"description": "Demonstrating using custom classes to create bitmap patterns. See /utils/pre-satori.ts for more details. Edit this recipe at /app/recipes/screens/bitmap-patterns.tsx",
 		"componentPath": "./screens/bitmap-patterns",
 		"hasDataFetch": false,
 		"props": {},
@@ -50,18 +50,39 @@
 		"version": "0.1.0",
 		"category": "display-components"
 	},
-	"fetch-data": {
-		"title": "Fetch Data",
+	"wikipedia": {
+		"title": "Wikipedia Article",
 		"published": true,
 		"createdAt": "2025-03-01T00:00:00Z",
 		"updatedAt": "2025-03-01T00:00:00Z",
-		"description": "A component that demonstrates fetching data from Wikipedia.",
-		"componentPath": "./screens/fetch-data",
+		"description": "A component that displays random Wikipedia articles.",
+		"componentPath": "./screens/wikipedia",
 		"hasDataFetch": true,
 		"props": {
-			"dataText": "Hello World (Default)"
+			"title": "Wikipedia (Default)",
+			"extract": "Loading article..."
 		},
-		"tags": ["tailwind", "e-ink", "display", "text"],
+		"tags": ["tailwind", "e-ink", "display", "text", "api"],
+		"author": {
+			"name": "Mangle Kuo",
+			"github": "ghcpuman902"
+		},
+		"version": "0.1.0",
+		"category": "display-components"
+	},
+	"bitcoin-price": {
+		"title": "Bitcoin Price",
+		"published": true,
+		"createdAt": "2025-03-01T00:00:00Z",
+		"updatedAt": "2025-03-01T00:00:00Z",
+		"description": "A component that displays the current Bitcoin price and market data.",
+		"componentPath": "./screens/bitcoin-price",
+		"hasDataFetch": true,
+		"props": {
+			"price": "Loading...",
+			"change24h": "0"
+		},
+		"tags": ["tailwind", "e-ink", "display", "cryptocurrency", "api"],
 		"author": {
 			"name": "Mangle Kuo",
 			"github": "ghcpuman902"
@@ -70,11 +91,11 @@
 		"category": "display-components"
 	},
 	"not-found": {
-		"title": "Not Found Screen",
+		"title": "Not Found Recipe",
 		"published": true,
 		"createdAt": "2025-03-01T00:00:00Z",
 		"updatedAt": "2025-03-01T00:00:00Z",
-		"description": "A fallback screen displayed when a requested screen is not found.",
+		"description": "A fallback recipe displayed when a requested recipe is not found.",
 		"componentPath": "./screens/not-found",
 		"hasDataFetch": false,
 		"props": {
@@ -88,4 +109,4 @@
 		"version": "1.0.0",
 		"category": "system-components"
 	}
-}
+} 

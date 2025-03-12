@@ -23,8 +23,8 @@ export default function Album() {
 									style={{ imageRendering: "pixelated" }}
 								/>
 							</picture>
-							<div className="text-[60px] text-white absolute top-0 right-0 p-4 flex flex-col gap-2 items-end">
-								<span className="font-bold">
+							<div className="text-[60px] text-white absolute top-0 right-0 p-4 flex flex-col items-end leading-none">
+								<span className="">
 									{new Date().toLocaleTimeString("en-GB", {
 										timeZone: "Europe/London",
 										hour12: true,

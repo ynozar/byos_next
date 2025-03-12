@@ -1,3 +1,4 @@
+// this is for caching testing on local machine
 // Create a global memory cache that persists between requests
 // This needs to be outside the module to be shared across instances
 global.bitmapCache = global.bitmapCache || new Map();

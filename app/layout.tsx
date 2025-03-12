@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist_Mono as FontMono, Geist as FontSans } from "next/font/google";
+import localFont from 'next/font/local'
 import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
 import { Suspense, cache } from "react";
@@ -18,6 +19,13 @@ const fontMono = FontMono({
 	subsets: ["latin"],
 	variable: "--font-mono",
 });
+
+const blockKie = localFont({
+	src: '../public/fonts/BlockKie.ttf', // Adjust path as needed
+	variable: '--font-blockkie',
+	weight: '400',
+	style: 'normal',
+  });
 
 const META_THEME_COLORS = {
 	light: "#ffffff",
@@ -128,6 +136,7 @@ export default async function RootLayout({
 					"bg-background overscroll-none font-sans antialiased",
 					fontSans.variable,
 					fontMono.variable,
+					blockKie.variable,
 				)}
 			>
 				<Suspense

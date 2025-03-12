@@ -1,23 +1,23 @@
-# Component Examples
+# Recipe Collection
 
-This examples page allows you to visualize and test components in both their direct rendering and bitmap (BMP) rendering forms. It's designed to help develop and test components for e-ink displays.
+This recipes page allows you to visualize and test components in both their direct rendering and bitmap (BMP) rendering forms. It's designed to help develop and test components for e-ink displays.
 
 ## How It Works
 
-The examples page provides two main views:
+The recipes page provides two main views:
 
-1. **Index View** (`/examples`) - Shows a list of all available screens grouped by category
-2. **Screen View** (`/examples/[slug]`) - Shows a specific screen with both direct and BMP rendering
+1. **Index View** (`/recipes`) - Shows a list of all available recipes grouped by category
+2. **Recipe View** (`/recipes/[slug]`) - Shows a specific recipe with both direct and BMP rendering
 
-Each screen is defined in `app/components.json` and can be accessed via its slug.
+Each recipe is defined in `app/recipes/screens.json` and can be accessed via its slug.
 
-## Adding New Screen
+## Adding New Recipe
 
-To add a new screen to the examples:
+To add a new recipe to the collection:
 
-1. Create your screen folder in the `app/screens` directory
-2. Add your my-component.tsx and get-data.ts to the screen folder
-3. Add an entry to `app/components.json` with the following structure:
+1. Create your recipe folder in the `app/recipes/screens` directory
+2. Add your my-component.tsx and get-data.ts to the recipe folder
+3. Add an entry to `app/recipes/screens.json` with the following structure:
 
 ```json
 {

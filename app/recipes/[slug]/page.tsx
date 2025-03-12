@@ -3,11 +3,11 @@ import path from "path";
 import { createElement, Suspense, use } from "react";
 import { ImageResponse } from "next/og";
 import { renderBmp } from "@/utils/render-bmp";
-import screens from "@/app/examples/screens.json";
+import screens from "@/app/recipes/screens.json";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { ScreenPreviewLayout } from "@/components/examples/screen-preview-layout";
+import { RecipePreviewLayout } from "@/components/recipes/recipe-preview-layout";
 import { revalidateTag } from "next/cache";
 import { Button } from "@/components/ui/button";
 import { RefreshCcw } from "lucide-react";
@@ -43,7 +43,7 @@ const fetchConfig = (slug: string) => {
 const fetchComponent = async (slug: string) => {
 	try {
 		const { default: Component } = await import(
-			`@/app/examples/screens/${slug}/${slug}.tsx`
+			`@/app/recipes/screens/${slug}/${slug}.tsx`
 		);
 		return Component;
 	} catch (error) {
@@ -60,7 +60,7 @@ const fetchProps = async (
 	if (config.hasDataFetch) {
 		try {
 			const { default: fetchDataFunction } = await import(
-				`@/app/examples/screens/${slug}/getData.ts`
+				`@/app/recipes/screens/${slug}/getData.ts`
 			);
 			props = await fetchDataFunction();
 		} catch (error) {
@@ -124,7 +124,7 @@ const BitmapImage = ({
 };
 
 // Component to render the component props
-const ComponentProps = ({
+const RecipeProps = ({
 	props,
 	slug,
 }: {
@@ -143,7 +143,7 @@ const ComponentProps = ({
 				action={refreshData}
 				className="flex flex-row gap-2 items-center mb-4"
 			>
-				<h2 className="text-xl font-semibold">Component Props</h2>
+				<h2 className="text-xl font-semibold">Recipe Props</h2>
 				<Button type="submit">
 					<RefreshCcw className="size-4" />
 				</Button>
@@ -183,7 +183,7 @@ const SuspendedBitmap = ({
 };
 
 // Main component that uses the data
-const ComponentContent = ({ slug }: { slug: string }) => {
+const RecipeContent = ({ slug }: { slug: string }) => {
 	// Fetch config first
 	const config = fetchConfig(slug);
 	if (!config) {
@@ -219,7 +219,7 @@ const ComponentContent = ({ slug }: { slug: string }) => {
 					</Suspense>
 				</div>
 
-				<ScreenPreviewLayout>
+				<RecipePreviewLayout>
 					<div className="flex flex-col gap-0 mb-2">
 						<div className="w-[800px] h-[480px] ring-2 ring-gray-200 rounded-xs">
 							<AspectRatio ratio={5 / 3}>
@@ -238,7 +238,7 @@ const ComponentContent = ({ slug }: { slug: string }) => {
 								</Suspense>
 							</AspectRatio>
 						</div>
-						<p className="leading-7">Bitmap rendering of the component</p>
+						<p className="leading-7">Bitmap rendering of the recipe</p>
 					</div>
 					<div className="flex flex-col gap-0">
 						<div className="w-[800px] h-[480px] ring-2 ring-gray-200 rounded-xs">
@@ -246,7 +246,7 @@ const ComponentContent = ({ slug }: { slug: string }) => {
 								<Suspense
 									fallback={
 										<div className="w-full h-full flex items-center justify-center">
-											Rendering component...
+											Rendering recipe...
 										</div>
 									}
 								>
@@ -254,9 +254,9 @@ const ComponentContent = ({ slug }: { slug: string }) => {
 								</Suspense>
 							</AspectRatio>
 						</div>
-						<p className="leading-7">Direct rendering of the component</p>
+						<p className="leading-7">Direct rendering of the recipe</p>
 					</div>
-				</ScreenPreviewLayout>
+				</RecipePreviewLayout>
 
 				{config.hasDataFetch && (
 					<Suspense
@@ -266,7 +266,7 @@ const ComponentContent = ({ slug }: { slug: string }) => {
 							</div>
 						}
 					>
-						<ComponentProps props={props} slug={slug} />
+						<RecipeProps props={props} slug={slug} />
 					</Suspense>
 				)}
 			</div>
@@ -274,7 +274,7 @@ const ComponentContent = ({ slug }: { slug: string }) => {
 	);
 };
 
-export default async function ComponentPage({
+export default async function RecipePage({
 	params,
 }: { params: Promise<{ slug: string }> }) {
 	const { slug } = await params;
@@ -283,11 +283,11 @@ export default async function ComponentPage({
 		<Suspense
 			fallback={
 				<div className="w-full h-full flex items-center justify-center">
-					Loading component...
+					Loading recipe...
 				</div>
 			}
 		>
-			<ComponentContent slug={slug} />
+			<RecipeContent slug={slug} />
 		</Suspense>
 	);
 }
