@@ -2,124 +2,57 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { Columns2, Rows2, ZoomIn, ZoomOut } from "lucide-react";
-
-type LayoutToggleProps = {
-	layout: "columns" | "rows";
-	onLayoutChange: (layout: "columns" | "rows") => void;
-} & React.HTMLAttributes<HTMLDivElement>;
-
-const LayoutToggle = React.forwardRef<HTMLDivElement, LayoutToggleProps>(
-	({ className, layout, onLayoutChange, ...props }, ref) => {
-		return (
-			<div
-				ref={ref}
-				className={cn(
-					"inline-flex items-center rounded-md border bg-muted p-1",
-					className,
-				)}
-				{...props}
-			>
-				<button
-					type="button"
-					onClick={() => onLayoutChange("columns")}
-					className={cn(
-						"inline-flex items-center justify-center rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-						layout === "columns"
-							? "bg-primary text-primary-foreground"
-							: "text-muted-foreground hover:bg-muted hover:text-foreground",
-					)}
-					aria-label="Column layout"
-				>
-					<Columns2 className="h-4 w-4" />
-				</button>
-				<button
-					type="button"
-					onClick={() => onLayoutChange("rows")}
-					className={cn(
-						"inline-flex items-center justify-center rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-						layout === "rows"
-							? "bg-primary text-primary-foreground"
-							: "text-muted-foreground hover:bg-muted hover:text-foreground",
-					)}
-					aria-label="Row layout"
-				>
-					<Rows2 className="h-4 w-4" />
-				</button>
-			</div>
-		);
-	},
-);
-
-LayoutToggle.displayName = "LayoutToggle";
-
-type ScaleToggleProps = {
-	scale: "full" | "half";
-	onScaleChange: (scale: "full" | "half") => void;
-} & React.HTMLAttributes<HTMLDivElement>;
-
-const ScaleToggle = React.forwardRef<HTMLDivElement, ScaleToggleProps>(
-	({ className, scale, onScaleChange, ...props }, ref) => {
-		return (
-			<div
-				ref={ref}
-				className={cn(
-					"inline-flex items-center rounded-md border bg-muted p-1",
-					className,
-				)}
-				{...props}
-			>
-				<button
-					type="button"
-					onClick={() => onScaleChange("full")}
-					className={cn(
-						"inline-flex items-center justify-center rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-						scale === "full"
-							? "bg-primary text-primary-foreground"
-							: "text-muted-foreground hover:bg-muted hover:text-foreground",
-					)}
-					aria-label="Full scale (1x)"
-				>
-					<ZoomIn className="h-4 w-4" />
-				</button>
-				<button
-					type="button"
-					onClick={() => onScaleChange("half")}
-					className={cn(
-						"inline-flex items-center justify-center rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-						scale === "half"
-							? "bg-primary text-primary-foreground"
-							: "text-muted-foreground hover:bg-muted hover:text-foreground",
-					)}
-					aria-label="Half scale (0.5x)"
-				>
-					<ZoomOut className="h-4 w-4" />
-				</button>
-			</div>
-		);
-	},
-);
-
-ScaleToggle.displayName = "ScaleToggle";
+import { Columns2, Rows2, ZoomIn, ZoomOut, FileCode } from "lucide-react";
+import { SlideToggle, type SlideToggleOption } from "@/components/ui/slide-toggle";
 
 type RecipePreviewLayoutProps = {
-	children: React.ReactNode;
+	children?: React.ReactNode;
+	bmpComponent?: React.ReactNode;
+	pngComponent?: React.ReactNode;
+	svgComponent?: React.ReactNode;
+	reactComponent?: React.ReactNode;
+	bmpLinkComponent?: React.ReactNode;
+	pngLinkComponent?: React.ReactNode;
+	svgLinkComponent?: React.ReactNode;
+	reactLinkComponent?: React.ReactNode;
 	defaultLayout?: "columns" | "rows";
 	defaultScale?: "full" | "half";
+	defaultRenderType?: "bmp" | "png" | "svg";
 };
 
 const RecipePreviewLayout = ({
 	children,
-	defaultLayout = "columns",
+	bmpComponent,
+	pngComponent,
+	svgComponent,
+	reactComponent,
+	bmpLinkComponent,
+	pngLinkComponent,
+	svgLinkComponent,
+	reactLinkComponent,
+	defaultLayout = "rows",
 	defaultScale = "full",
+	defaultRenderType = "bmp",
 }: RecipePreviewLayoutProps) => {
 	const [layout, setLayout] = React.useState<"columns" | "rows">(defaultLayout);
 	const [scale, setScale] = React.useState<"full" | "half">(defaultScale);
+	const [renderType, setRenderType] = React.useState<"bmp" | "png" | "svg">(defaultRenderType);
 	const [isInitialized, setIsInitialized] = React.useState(false);
 	
 	// Constants for width calculations
 	const singleColumnWidth = 800+2; // adding 2px for the border
 	const spacing = 16; // This is equivalent to gap-4 in Tailwind (4 * 4px)
+
+	// Toggle options
+	const layoutOptions: SlideToggleOption<"columns" | "rows">[] = [
+		{ value: "columns", icon: <Columns2 className="h-4 w-4" />, label: "Columns", ariaLabel: "Column layout" },
+		{ value: "rows", icon: <Rows2 className="h-4 w-4" />, label: "Rows", ariaLabel: "Row layout" },
+	];
+
+	const scaleOptions: SlideToggleOption<"full" | "half">[] = [
+		{ value: "full", icon: <ZoomIn className="h-4 w-4" />, label: "Full", ariaLabel: "Full scale (1x)" },
+		{ value: "half", icon: <ZoomOut className="h-4 w-4" />, label: "Half", ariaLabel: "Half scale (0.5x)" },
+	];
 
 	// Load saved preferences from localStorage on component mount
 	React.useEffect(() => {
@@ -128,6 +61,7 @@ const RecipePreviewLayout = ({
 			try {
 				const savedLayout = localStorage.getItem("recipePreviewLayout") as "columns" | "rows" | null;
 				const savedScale = localStorage.getItem("recipePreviewScale") as "full" | "half" | null;
+				const savedRenderType = localStorage.getItem("recipePreviewRenderType") as "bmp" | "png" | "svg" | null;
 				
 				if (savedLayout) {
 					setLayout(savedLayout);
@@ -135,6 +69,10 @@ const RecipePreviewLayout = ({
 				
 				if (savedScale) {
 					setScale(savedScale);
+				}
+				
+				if (savedRenderType) {
+					setRenderType(savedRenderType);
 				}
 				
 				setIsInitialized(true);
@@ -180,9 +118,21 @@ const RecipePreviewLayout = ({
 			}
 		}, 0);
 	}, []);
+	
+	// Handle render type change
+	const handleRenderTypeChange = React.useCallback((newRenderType: "bmp" | "png" | "svg") => {
+		setRenderType(newRenderType);
+		// Defer localStorage update to not block rendering
+		setTimeout(() => {
+			try {
+				localStorage.setItem("recipePreviewRenderType", newRenderType);
+			} catch (error) {
+				console.error("Error saving render type preference:", error);
+			}
+		}, 0);
+	}, []);
 
 	// Calculate width based on layout
-
 	const getContainerWidth = React.useCallback(({ l, sCW, sP }: { l: "columns" | "rows", sCW: number, sP: number }) => {
 		if (l === "columns") {
 			return `${sCW * 2 + sP * 3}px`;
@@ -198,6 +148,7 @@ const RecipePreviewLayout = ({
 				<div className="flex gap-2">
 					<div className="inline-flex items-center rounded-md border bg-muted p-1 h-10 w-24" />
 					<div className="inline-flex items-center rounded-md border bg-muted p-1 h-10 w-24" />
+					<div className="inline-flex items-center rounded-md border bg-muted p-1 h-10 w-24" />
 				</div>
 				<div className="w-full">
 					<div 
@@ -211,21 +162,104 @@ const RecipePreviewLayout = ({
 		);
 	}
 
+	// Determine what to render based on provided components or children
+	const renderContent = () => {
+		// If specific components are provided, use them
+		if (bmpComponent || pngComponent || svgComponent || reactComponent) {
+			let imageComponent: React.ReactNode | undefined;
+			let linkComponent: React.ReactNode | undefined;
+			
+			if (renderType === "bmp") {
+				imageComponent = bmpComponent;
+				linkComponent = bmpLinkComponent;
+			} else if (renderType === "png") {
+				imageComponent = pngComponent;
+				linkComponent = pngLinkComponent;
+			} else if (renderType === "svg") {
+				imageComponent = svgComponent;
+				linkComponent = svgLinkComponent;
+			}
+			
+			// Create an array of components to render
+			const componentsToRender = [];
+			
+			if (imageComponent) {
+				componentsToRender.push(
+					<div key="image" className="flex flex-col gap-0 mb-2">
+						{imageComponent}
+						{linkComponent && (
+							<div className="mt-1">
+								{linkComponent}
+							</div>
+						)}
+					</div>
+				);
+			}
+			
+			if (reactComponent) {
+				componentsToRender.push(
+					<div key="react" className="flex flex-col gap-0">
+						{reactComponent}
+						{reactLinkComponent && (
+							<div className="mt-1">
+								{reactLinkComponent}
+							</div>
+						)}
+					</div>
+				);
+			}
+			
+			return componentsToRender;
+		}
+		
+		// Otherwise, fall back to children
+		return children;
+	};
+
+	// Determine which render type options to show based on available components
+	const getRenderTypeOptions = () => {
+		const options: SlideToggleOption<"bmp" | "png" | "svg">[] = [];
+		
+		if (bmpComponent) {
+			options.push({ value: "bmp", icon: undefined, label: "BMP", ariaLabel: "BMP rendering" });
+		}
+		
+		if (pngComponent) {
+			options.push({ value: "png", icon: undefined, label: "PNG", ariaLabel: "PNG rendering" });
+		}
+		
+		if (svgComponent) {
+			options.push({ value: "svg", icon: undefined, label: "SVG", ariaLabel: "SVG rendering" });
+		}
+		
+		return options;
+	};
+
 	return (
 		<div className="flex flex-col gap-4 items-start">
-			<div className="flex gap-2">
-				<LayoutToggle 
-					layout={layout} 
-					onLayoutChange={handleLayoutChange} 
+			<div className="flex flex-wrap gap-2">
+				<SlideToggle<"columns" | "rows">
+					options={layoutOptions}
+					value={layout}
+					onChange={handleLayoutChange}
 				/>
-				<ScaleToggle 
-					scale={scale} 
-					onScaleChange={handleScaleChange} 
+				<SlideToggle<"full" | "half">
+					options={scaleOptions}
+					value={scale}
+					onChange={handleScaleChange}
 				/>
+				{(bmpComponent || pngComponent || svgComponent) && (
+					<SlideToggle<"bmp" | "png" | "svg">
+						options={getRenderTypeOptions()}
+						value={renderType}
+						onChange={handleRenderTypeChange}
+					/>
+				)}
 			</div>
 			<div className={cn(
 				"w-full",
-				layout === "rows" && "max-w-full overflow-x-auto pb-4"
+				layout === "rows" && "max-w-full overflow-x-auto pb-4",
+				scale === "half" && "overflow-hidden"
 			)}>
 				<div
 					className={cn(
@@ -236,9 +270,10 @@ const RecipePreviewLayout = ({
 					style={{
 						width: getContainerWidth({ l: layout, sCW: singleColumnWidth, sP: spacing }),
 						height: scale === "half" ? "200%" : "auto",
+						transformOrigin: "top left"
 					}}
 				>
-					{children}
+					{renderContent()}
 				</div>
 			</div>
 		</div>

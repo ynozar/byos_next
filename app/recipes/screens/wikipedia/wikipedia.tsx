@@ -62,18 +62,19 @@ export default function Wikipedia({
 			});
 
 	return (
-		<PreSatori>
+		<PreSatori useDoubling={true}>
 			{(transform) => (
 				<>
 					{transform(
-						<div className="flex flex-col w-[800px] h-[480px] bg-white p-0">
+						<div className="flex flex-col w-[800px] h-[480px]">
 							<div className="flex-none p-4 border-b border-black">
-								<h1 className="text-[48px] text-black truncate">
+								<h1 className="text-5xl">
 									{title || "Wikipedia Article"}
 								</h1>
 							</div>
-							<div className="flex-1 overflow-hidden p-4 flex flex-row">
-								<p className="text-[24px] text-black overflow-hidden flex-grow tracking-tight leading-none">
+							<div className="flex-1 p-4 flex flex-row">
+								<p className="text-2xl flex-grow tracking-tight leading-none"
+								>
 									{truncatedExtract}
 								</p>
 								{hasValidThumbnail && (
@@ -103,8 +104,8 @@ export default function Wikipedia({
 									</div>
 								)}
 							</div>
-							<div className="flex-none p-2">
-								<div className="text-[24px] text-black flex justify-between w-full p-2 rounded-[8px] dither-100">
+							<div className="flex-none p-4">
+								<div className="text-2xl text-black flex justify-between w-full p-2 rounded-xl dither-100">
 									<span>Wikipedia • Random Article</span>
 									{formattedDate && <span>Generated: {formattedDate}</span>}
 								</div>

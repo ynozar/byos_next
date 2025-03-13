@@ -27,6 +27,13 @@ const blockKie = localFont({
 	style: 'normal',
   });
 
+const geneva9 = localFont({
+	src: '../public/fonts/geneva-9.ttf',
+	variable: '--font-geneva9',
+	weight: '400',
+	style: 'normal',
+});
+
 const META_THEME_COLORS = {
 	light: "#ffffff",
 	dark: "#09090b",
@@ -137,6 +144,7 @@ export default async function RootLayout({
 					fontSans.variable,
 					fontMono.variable,
 					blockKie.variable,
+					geneva9.variable,
 				)}
 			>
 				<Suspense

@@ -1,44 +1,96 @@
 import type { ImageResponse } from "next/og";
-import { Jimp } from "jimp";
+import sharp from 'sharp';
 
 // The exact size expected by the firmware
 export const DISPLAY_BMP_IMAGE_SIZE = 48062;
 
+/** Bayer matrix (8x8) for dithering */
+const BAYER_MATRIX_8x8: number[][] = [
+	[  0,  32,  8,  40,  2,  34, 10, 42 ],
+	[ 48, 16, 56, 24, 50, 18, 58, 26 ],
+	[ 12, 44,  4, 36, 14, 46,  6, 38 ],
+	[ 60, 28, 52, 20, 62, 30, 54, 22 ],
+	[  3, 35, 11, 43,  1, 33,  9, 41 ],
+	[ 51, 19, 59, 27, 49, 17, 57, 25 ],
+	[ 15, 47,  7, 39, 13, 45,  5, 37 ],
+	[ 63, 31, 55, 23, 61, 29, 53, 21 ]
+];
+
 export async function renderBmp(pngResponse: ImageResponse) {
 	const pngBuffer = await pngResponse.arrayBuffer();
 
-	// Convert PNG to BMP using Jimp
-	const image = await Jimp.read(Buffer.from(pngBuffer));
-	const { data } = image.bitmap;
-
 	// Fixed dimensions to match the device requirements
-	const width = 800;
-	const height = 480;
-	const pixelCount = width * height;
+	const targetWidth = 800;
+	const targetHeight = 480;
+	const targetPixelCount = targetWidth * targetHeight;
 
-	// Use typed arrays for better performance
-	const grayscale = new Uint8Array(pixelCount);
-	const dithered = new Uint8Array(pixelCount);
-	const isEdge = new Uint8Array(pixelCount);
+	// Load image metadata
+	const metadata = await sharp(Buffer.from(pngBuffer)).metadata();
+	const isDoubleSize = metadata.width === targetWidth * 2 && metadata.height === targetHeight * 2;
 
-	// Bayer dithering matrix 8x8 for improved monochrome rendering
-	// Values are normalized to 0-63 range for efficient threshold comparison
-	const bayerPattern = new Uint8Array([
-		0, 32, 8, 40, 2, 34, 10, 42,
-		48, 16, 56, 24, 50, 18, 58, 26,
-		12, 44, 4, 36, 14, 46, 6, 38,
-		60, 28, 52, 20, 62, 30, 54, 22,
-		3, 35, 11, 43, 1, 33, 9, 41,
-		51, 19, 59, 27, 49, 17, 57, 25,
-		15, 47, 7, 39, 13, 45, 5, 37,
-		63, 31, 55, 23, 61, 29, 53, 21
-	]);
+	// Step 1: Resize to 800x480 if necessary
+	let image = sharp(Buffer.from(pngBuffer));
+	if (isDoubleSize) {
+		image = image.resize(targetWidth, targetHeight, { kernel: sharp.kernel.nearest });
+	}
+
+	const grayscaleImage = await image
+		.grayscale()
+		.raw()
+		.toBuffer({ resolveWithObject: true });
+
+	const { data } = grayscaleImage; // `data` is a Uint8Array of grayscale values
+
+	// Step 3: Apply dithering & thresholding
+	const grayscale = new Uint8Array(targetPixelCount);
+	const dithered = new Uint8Array(targetPixelCount);
+	const isEdge = new Uint8Array(targetPixelCount);
+	
+	// First, copy grayscale data
+	for (let y = 0; y < targetHeight; y++) {
+		for (let x = 0; x < targetWidth; x++) {
+			const i = y * targetWidth + x;
+			grayscale[i] = data[i];
+		}
+	}
+	
+	// Process dithering and edge detection in a single pass
+	for (let y = 0; y < targetHeight; y++) {
+		const yOffset = y * targetWidth;
+		const bayerY = y & 7; // y % 8 using bit mask
+		const bayerYOffset = bayerY << 3; // bayerY * 8 using bit shift
+		
+		for (let x = 0; x < targetWidth; x++) {
+			const idx = yOffset + x;
+			const gray = grayscale[idx];
+			
+			// Dithering using bit operations
+			const bayerX = x & 7; // x % 8 using bit mask
+			const thresholdValue = BAYER_MATRIX_8x8[bayerY][bayerX];
+			const normalizedGray = gray >> 2; // Divide by 4 using bit shift (approximates * 64/255)
+			dithered[idx] = normalizedGray <= thresholdValue ? 1 : 0;
+			
+			// Edge detection for pixels not on the border
+			if (y > 0 && y < targetHeight - 1 && x > 0 && x < targetWidth - 1) {
+				// Check if this pixel has high contrast with neighbors
+				const fuzziness = 20;
+				const hasExtreme = 
+					gray < fuzziness || gray > 255 - fuzziness || 
+					grayscale[idx - 1] < fuzziness || grayscale[idx - 1] > 255 - fuzziness ||
+					grayscale[idx + 1] < fuzziness || grayscale[idx + 1] > 255 - fuzziness ||
+					grayscale[idx - targetWidth] < fuzziness || grayscale[idx - targetWidth] > 255 - fuzziness ||
+					grayscale[idx + targetWidth] < fuzziness || grayscale[idx + targetWidth] > 255 - fuzziness;
+				
+				isEdge[idx] = hasExtreme ? 1 : 0;
+			}
+		}
+	}
 
 	// BMP file header (14 bytes) + Info header (40 bytes)
 	const fileHeaderSize = 14;
 	const infoHeaderSize = 40;
 	const bitsPerPixel = 1; // 1-bit monochrome
-	const rowSize = Math.floor((width * bitsPerPixel + 31) / 32) * 4;
+	const rowSize = Math.floor((targetWidth * bitsPerPixel + 31) / 32) * 4;
 	const paletteSize = 8; // 2 colors * 4 bytes each
 	const fileSize = DISPLAY_BMP_IMAGE_SIZE; // Exactly match the expected size
 
@@ -53,12 +105,12 @@ export async function renderBmp(pngResponse: ImageResponse) {
 
 	// BMP Info Header - matching firmware expectations
 	buffer.writeUInt32LE(infoHeaderSize, 14); // Info Header Size
-	buffer.writeInt32LE(width, 18); // Width
-	buffer.writeInt32LE(height, 22); // Height
+	buffer.writeInt32LE(targetWidth, 18); // Width
+	buffer.writeInt32LE(targetHeight, 22); // Height
 	buffer.writeUInt16LE(1, 26); // Planes
 	buffer.writeUInt16LE(bitsPerPixel, 28); // Bits per pixel (1-bit)
 	buffer.writeUInt32LE(0, 30); // Compression
-	buffer.writeUInt32LE(rowSize * height, 34); // Image Size
+	buffer.writeUInt32LE(rowSize * targetHeight, 34); // Image Size
 	buffer.writeInt32LE(0, 38); // X pixels per meter
 	buffer.writeInt32LE(0, 42); // Y pixels per meter
 	buffer.writeUInt32LE(2, 46); // Total Colors (2 for monochrome)
@@ -69,80 +121,20 @@ export async function renderBmp(pngResponse: ImageResponse) {
 	buffer.writeUInt32LE(0x00ffffff, paletteOffset); // White
 	buffer.writeUInt32LE(0x00000000, paletteOffset + 4); // Black
 
-	// Step 1: Extract grayscale values from the original image using bit shifts for faster calculation
-	// Using integer math and bit shifts for faster grayscale conversion
-	// R*0.3 + G*0.59 + B*0.11 approximated as (R*77 + G*151 + B*28) >> 8
-	for (let y = 0; y < height; y++) {
-		const invY = height - 1 - y;
-		const yOffset = y * width;
-		const srcYOffset = invY * width * 4;
-		
-		for (let x = 0; x < width; x++) {
-			const srcPos = srcYOffset + (x << 2); // x * 4 using bit shift
-			const idx = yOffset + x;
-			
-			// Fast grayscale conversion using integer math and bit shifts
-			grayscale[idx] = (data[srcPos] * 77 + data[srcPos + 1] * 151 + data[srcPos + 2] * 28) >> 8;
-		}
-	}
-
-	// Step 2: Create a dithered version using bit operations
+	// Step 4: Generate the final bitmap
 	const dataOffset = fileHeaderSize + infoHeaderSize + paletteSize;
 	
-	// Pre-calculate row offsets for faster access
-	const rowOffsets = new Uint32Array(height);
-	for (let y = 0; y < height; y++) {
-		rowOffsets[y] = y * width;
-	}
-	
-	// Process dithering and edge detection in a single pass
-	for (let y = 0; y < height; y++) {
-		const yOffset = rowOffsets[y];
-		const bayerY = y & 7; // y % 8 using bit mask
-		const bayerYOffset = bayerY << 3; // bayerY * 8 using bit shift
-		
-		for (let x = 0; x < width; x++) {
-			const idx = yOffset + x;
-			const gray = grayscale[idx];
-			
-			// Dithering using bit operations
-			const bayerX = x & 7; // x % 8 using bit mask
-			const thresholdValue = bayerPattern[bayerYOffset + bayerX];
-			const normalizedGray = gray >> 2; // Divide by 4 using bit shift (approximates * 64/255)
-			dithered[idx] = normalizedGray <= thresholdValue ? 1 : 0;
-			
-			// Edge detection for pixels not on the border
-			if (y > 0 && y < height - 1 && x > 0 && x < width - 1) {
-				// Check if this pixel has high contrast with neighbors
-				const fuzziness = 20;
-				const hasExtreme = 
-					gray < fuzziness || gray > 255 - fuzziness || 
-					grayscale[idx - 1] < fuzziness || grayscale[idx - 1] > 255 - fuzziness ||
-					grayscale[idx + 1] < fuzziness || grayscale[idx + 1] > 255 - fuzziness ||
-					grayscale[idx - width] < fuzziness || grayscale[idx - width] > 255 - fuzziness ||
-					grayscale[idx + width] < fuzziness || grayscale[idx + width] > 255 - fuzziness;
-				
-				isEdge[idx] = hasExtreme ? 1 : 0;
-			}
-		}
-	}
-
-	// Pixel Data - Apply the improved rendering logic with bit operations
-	// Pre-calculate row byte offsets for the output buffer
-	const rowByteOffsets = new Uint32Array(height);
-	for (let y = 0; y < height; y++) {
-		rowByteOffsets[y] = dataOffset + (y * rowSize);
-	}
-	
 	// Process 8 pixels at a time where possible
-	for (let y = 0; y < height; y++) {
-		const yOffset = rowOffsets[y];
-		const destRowOffset = rowByteOffsets[y];
+	for (let y = 0; y < targetHeight; y++) {
+		// BMP is stored bottom-up, so we need to flip the y-coordinate
+		const targetY = targetHeight - 1 - y;
+		const yOffset = targetY * targetWidth;
+		const destRowOffset = dataOffset + (y * rowSize);
 		
 		// Process 8 pixels at a time
-		for (let x = 0; x < width; x += 8) {
+		for (let x = 0; x < targetWidth; x += 8) {
 			let byte = 0;
-			const remainingPixels = Math.min(8, width - x);
+			const remainingPixels = Math.min(8, targetWidth - x);
 			
 			// Process each bit in the byte
 			for (let bit = 0; bit < remainingPixels; bit++) {

@@ -36,16 +36,16 @@ export default function BitcoinPrice({
 			{(transform) => (
 				<>
 					{transform(
-						<div className="flex flex-col w-[800px] h-[480px] bg-white p-0">
+						<div className="flex flex-col w-[800px] h-[480px] bg-white">
 							<div className="flex-none p-4 border-b border-black">
-								<h1 className="text-[42px] text-black truncate">
+								<h1 className="text-[42px]  truncate">
 									Bitcoin Price Tracker
 								</h1>
 							</div>
 							<div className="flex-1 overflow-hidden p-4 flex flex-col">
 								<div className="flex items-center">
 									<div className="flex-1">
-										<h2 className="text-9xl text-black">${price}</h2>
+										<h2 className="text-9xl ">${price}</h2>
 									</div>
 									<div className="w-[120px] h-[120px]">
 										<picture>
@@ -68,18 +68,18 @@ export default function BitcoinPrice({
 										</picture>
 									</div>
 								</div>
-                <div className="text-4xl text-black">{isPositive ? "∆" : "↓"} {changeValue}%</div>
+                <div className="text-4xl ">{isPositive ? "∆" : "↓"} {changeValue}%</div>
 							</div>
 							<div className="flex-none p-4 flex flex-col">
-								<div className="w-full flex flex-row mb-4 [&>div]:text-[48px]" style={{ gap: "16px" }}>
+								<div className="w-full flex flex-row mb-4" style={{ gap: "16px" }}>
 									{priceStats.map((stat, index) => (
-										<div key={index} className="p-2 rounded-[8px] border border-black flex-grow flex flex-col">
-											<div className="text-black text-[24px]">{stat.label}</div>
-											<div className="text-black text-[24px]">${stat.value}</div>
+										<div key={index} className="p-2 rounded-xl border border-black flex-grow flex flex-col font-geneva9">
+											<div className="text-[28px] leading-none m-0">{stat.label}</div>
+											<div className="text-[28px] leading-none m-0">${stat.value}</div>
 										</div>
 									))}
 								</div>
-								<div className="w-full flex justify-end text-[24px] text-black p-2 rounded-[8px] dither-100">
+								<div className="w-full flex justify-end text-2xl p-2 rounded-xl dither-100">
 									{lastUpdated && <span>Last updated: {lastUpdated}</span>}
 								</div>
 							</div>

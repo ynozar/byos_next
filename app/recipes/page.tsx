@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import screens from "@/app/recipes/screens.json";
-import Image from "next/image";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Badge } from "@/components/ui/badge";
 
@@ -25,16 +24,19 @@ const ComponentPreview = ({
 			ratio={5 / 3}
 			className="bg-neutral-100 flex items-center justify-center p-0 border-b"
 		>
-			<Image
-				src={`/api/bitmap/${slug}.bmp`}
-				alt={`${config.title} preview`}
-				width={800}
-				height={480}
-				className="object-cover"
-				style={{
-					imageRendering: "pixelated",
-				}}
-			/>
+			<picture>
+				<source srcSet={`/api/bitmap/${slug}.bmp`} type="image/bmp" />
+				<img
+					src={`/api/bitmap/${slug}.bmp`}
+					alt={`${config.title} preview`}
+					width={800}
+					height={480}
+					className="object-cover"
+					style={{
+						imageRendering: "pixelated",
+					}}
+				/>
+			</picture>
 		</AspectRatio>
 	);
 };

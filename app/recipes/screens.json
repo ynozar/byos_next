@@ -4,14 +4,17 @@
 		"published": true,
 		"createdAt": "2025-03-01T00:00:00Z",
 		"updatedAt": "2025-03-01T00:00:00Z",
-		"description": "A simple text component. Edit this recipe at /app/recipes/screens/simple-text/simple-text.tsx",
+		"description": "A simple text component.",
 		"componentPath": "./screens/simple-text",
 		"hasDataFetch": false,
 		"props": {},
-		"tags": ["bitmap", "e-ink", "display", "text"],
+		"tags": ["bitmap", "text"],
 		"author": {
 			"name": "Mangle Kuo",
 			"github": "ghcpuman902"
+		},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
 		},
 		"version": "0.1.0",
 		"category": "display-components"
@@ -21,15 +24,16 @@
 		"published": true,
 		"createdAt": "2025-03-01T00:00:00Z",
 		"updatedAt": "2025-03-01T00:00:00Z",
-		"description": "A simple album recipe. Edit this recipe at /app/recipes/screens/album/album.tsx",
+		"description": "Photos with a clock.",
 		"componentPath": "./screens/album",
 		"hasDataFetch": false,
 		"props": {},
-		"tags": ["bitmap", "e-ink", "display", "text"],
+		"tags": ["bitmap", "text"],
 		"author": {
 			"name": "Mangle Kuo",
 			"github": "ghcpuman902"
 		},
+		"renderSettings": {},
 		"version": "0.1.0",
 		"category": "display-components"
 	},
@@ -42,11 +46,12 @@
 		"componentPath": "./screens/bitmap-patterns",
 		"hasDataFetch": false,
 		"props": {},
-		"tags": ["bitmap", "e-ink", "display", "patterns"],
+		"tags": ["bitmap", "patterns"],
 		"author": {
 			"name": "Mangle Kuo",
 			"github": "ghcpuman902"
 		},
+		"renderSettings": {},
 		"version": "0.1.0",
 		"category": "display-components"
 	},
@@ -54,7 +59,7 @@
 		"title": "Wikipedia Article",
 		"published": true,
 		"createdAt": "2025-03-01T00:00:00Z",
-		"updatedAt": "2025-03-01T00:00:00Z",
+		"updatedAt": "2025-03-13T00:00:00Z",
 		"description": "A component that displays random Wikipedia articles.",
 		"componentPath": "./screens/wikipedia",
 		"hasDataFetch": true,
@@ -62,10 +67,13 @@
 			"title": "Wikipedia (Default)",
 			"extract": "Loading article..."
 		},
-		"tags": ["tailwind", "e-ink", "display", "text", "api"],
+		"tags": ["tailwind", "text", "api", "live-data", "advanced"],
 		"author": {
 			"name": "Mangle Kuo",
 			"github": "ghcpuman902"
+		},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
 		},
 		"version": "0.1.0",
 		"category": "display-components"
@@ -82,11 +90,12 @@
 			"price": "Loading...",
 			"change24h": "0"
 		},
-		"tags": ["tailwind", "e-ink", "display", "cryptocurrency", "api"],
+		"tags": ["tailwind", "cryptocurrency", "api"],
 		"author": {
 			"name": "Mangle Kuo",
 			"github": "ghcpuman902"
 		},
+		"renderSettings": {},
 		"version": "0.1.0",
 		"category": "display-components"
 	},

@@ -37,37 +37,69 @@ const getBitmapCache = (): Map<string, CacheItem> | null => {
 	return global.bitmapCache;
 };
 
-// Use React's cache for font loading - executed once at module level
+// Update the loadFont cache function
 const loadFont = cache(() => {
 	try {
-		return fs.readFileSync(path.resolve("./public/fonts/BlockKie.ttf"));
+		return {
+			blockKie: fs.readFileSync(path.resolve("./public/fonts/BlockKie.ttf")),
+			geneva9: fs.readFileSync(path.resolve("./public/fonts/geneva-9.ttf"))
+		};
 	} catch (error) {
-		console.error("Error loading font:", error);
+		console.error("Error loading fonts:", error);
 		return null;
 	}
 });
 
-// Cache the font at module initialization
-const blockKieFont = loadFont();
+// Cache the fonts at module initialization
+const fonts = loadFont();
 
-// Cache the image options - executed once at module level
-const getImageOptions = cache(() => ({
-	width: 800,
-	height: 480,
-	fonts: [
-		...(blockKieFont
-			? [
-					{
-						name: "BlockKie",
-						data: blockKieFont,
-						weight: 400 as const,
-						style: "normal" as const,
-					},
-				]
-			: []),
-	],
-	debug: false,
-}));
+// Get image options based on recipe configuration
+const getImageOptions = (recipeId: string) => {
+	// Check if the recipe exists and has doubleSizeForSharperText setting
+	const config = screens[recipeId as keyof typeof screens];
+	
+	// Perform thorough type checking for nested properties
+	let useDoubling = false;
+	if (config && 
+		'renderSettings' in config && 
+		config.renderSettings && 
+		typeof config.renderSettings === 'object' &&
+		'doubleSizeForSharperText' in config.renderSettings) {
+		useDoubling = Boolean(config.renderSettings.doubleSizeForSharperText);
+	}
+	
+	const scaleFactor = useDoubling ? 2 : 1;
+	
+	console.log(`Rendering ${recipeId} with scale factor: ${scaleFactor}`);
+	
+	return {
+		width: 800 * scaleFactor,
+		height: 480 * scaleFactor,
+		fonts: [
+			...(fonts?.blockKie
+				? [
+						{
+							name: "BlockKie",
+							data: fonts.blockKie,
+							weight: 400 as const,
+							style: "normal" as const,
+						},
+					]
+				: []),
+			...(fonts?.geneva9
+				? [
+						{
+							name: "Geneva9",
+							data: fonts.geneva9,
+							weight: 400 as const,
+							style: "normal" as const,
+						},
+					]
+				: []),
+		],
+		debug: false,
+	};
+};
 
 // Helper function to load a recipe component - now using React's cache
 const loadRecipeBuffer = cache(async (recipeId: string) => {
@@ -118,7 +150,8 @@ const loadRecipeBuffer = cache(async (recipeId: string) => {
 			element = createElement(NotFoundScreen, { slug: recipeId });
 		}
 
-		const pngResponse = await new ImageResponse(element, getImageOptions());
+		// Use recipe-specific image options
+		const pngResponse = await new ImageResponse(element, getImageOptions(recipeId));
 		return await renderBmp(pngResponse);
 	} catch (error) {
 		console.error(`Error loading recipe component ${recipeId}:`, error);
@@ -201,7 +234,35 @@ export async function GET(
 		try {
 			// Only load fonts when needed for error fallback
 			const element = createElement(NotFoundScreen, { slug: "Error occurred" });
-			const pngResponse = await new ImageResponse(element, getImageOptions());
+			// Use default options for error screen
+			const defaultOptions = {
+				width: 800,
+				height: 480,
+				fonts: [
+					...(fonts?.blockKie
+						? [
+								{
+									name: "BlockKie",
+									data: fonts.blockKie,
+									weight: 400 as const,
+									style: "normal" as const,
+								},
+							]
+						: []),
+					...(fonts?.geneva9
+						? [
+								{
+									name: "Geneva9",
+									data: fonts.geneva9,
+									weight: 400 as const,
+									style: "normal" as const,
+								},
+							]
+						: []),
+				],
+				debug: false,
+			};
+			const pngResponse = await new ImageResponse(element, defaultOptions);
 			const buffer = await renderBmp(pngResponse);
 
 			return new Response(buffer, {
