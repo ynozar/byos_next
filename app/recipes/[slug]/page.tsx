@@ -351,8 +351,8 @@ const RenderComponent = ({
 };
 
 // Main recipe page component
-export default async function RecipePage({ params }: { params: { slug: string } }) {
-	const { slug } = params;
+export default async function RecipePage({ params }: { params: Promise<{ slug: string }> }) {
+	const { slug } = await params;
 	const config = await fetchConfig(slug);
 	
 	if (!config) {

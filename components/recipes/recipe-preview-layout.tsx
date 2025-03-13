@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { Columns2, Rows2, ZoomIn, ZoomOut, FileCode } from "lucide-react";
+import { Columns2, Rows2, ZoomIn, ZoomOut } from "lucide-react";
 import { SlideToggle, type SlideToggleOption } from "@/components/ui/slide-toggle";
 
 type RecipePreviewLayoutProps = {
