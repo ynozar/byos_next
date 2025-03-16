@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { useState, useEffect } from "react";
-import { useRouter, useParams, notFound } from "next/navigation";
+import { useParams, notFound } from "next/navigation";
 import Image from "next/image";
 import { RefreshCw, Save, X, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -69,7 +69,6 @@ const getSignalQuality = (rssi: number): string => {
 };
 
 export default function DevicePage() {
-	const router = useRouter();
 	const params = useParams();
 	const [device, setDevice] = useState<
 		(Device & { status?: string; type?: string }) | null
@@ -123,7 +122,7 @@ export default function DevicePage() {
 		};
 
 		fetchData();
-	}, [params.friendly_id, router]);
+	}, [params.friendly_id]);
 
 	// Handle form input changes
 	const handleInputChange = (

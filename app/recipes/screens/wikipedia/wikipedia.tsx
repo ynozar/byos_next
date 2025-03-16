@@ -97,7 +97,7 @@ export default function Wikipedia({
 								<div
 									className="text-base font-geneva9 flex justify-between w-full "
 								>
-									<span>{content_urls?.desktop?.page}</span> <span>{description}</span>
+									<span>{content_urls?.desktop?.page}</span> <span>{description && description.length > 100 ? description.substring(0, 100) + "..." : description}</span>
 								</div>
 								<div className="text-2xl text-black flex justify-between w-full p-2 rounded-xl dither-100" style={{ WebkitTextStroke: "4px white" }}>
 									<span>Wikipedia • Random Article</span>
