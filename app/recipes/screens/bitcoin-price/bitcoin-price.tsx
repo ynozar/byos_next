@@ -62,8 +62,8 @@ export default function BitcoinPrice({
 													objectFit: "contain",
 													width: "120px",
 													height: "120px",
+													filter: "grayscale(100%) brightness(50%) contrast(200%)",
 												}}
-												className="grayscale-100 brightness-50 contrast-200"
 											/>
 										</picture>
 									</div>

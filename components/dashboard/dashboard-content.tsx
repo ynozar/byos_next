@@ -52,49 +52,15 @@ export const DashboardContent = ({
 	const lastUpdatedDevice =
 		processedDevices.length > 0
 			? processedDevices.sort(
-					(a, b) =>
-						new Date(b.last_update_time || "").getTime() -
-						new Date(a.last_update_time || "").getTime(),
-				)[0]
+				(a, b) =>
+					new Date(b.last_update_time || "").getTime() -
+					new Date(a.last_update_time || "").getTime(),
+			)[0]
 			: null;
 
 	return (
 		<>
 			<div className="grid gap-2 md:gap-4 md:grid-cols-2">
-				<Card>
-					<CardHeader>
-						<CardTitle>System Information</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<div className="space-y-2">
-							<div className="flex justify-between items-center">
-								<span className="text-sm font-medium">Host URL:</span>
-								<span className="text-sm text-muted-foreground">
-									<a href={hostUrl}>{hostUrl}</a>
-								</span>
-							</div>
-							<div className="flex justify-between items-center">
-								<span className="text-sm font-medium">Total Devices:</span>
-								<span className="text-sm text-muted-foreground">
-									{processedDevices.length}
-								</span>
-							</div>
-							<div className="flex justify-between items-center">
-								<span className="text-sm font-medium">Online Devices:</span>
-								<span className="text-sm text-muted-foreground">
-									{onlineDevices.length}
-								</span>
-							</div>
-							<div className="flex justify-between items-center">
-								<span className="text-sm font-medium">Offline Devices:</span>
-								<span className="text-sm text-muted-foreground">
-									{offlineDevices.length}
-								</span>
-							</div>
-						</div>
-					</CardContent>
-				</Card>
-
 				<Card>
 					<CardHeader>
 						<CardTitle>Latest Screen</CardTitle>
@@ -135,84 +101,121 @@ export const DashboardContent = ({
 						)}
 					</CardContent>
 				</Card>
+
+				<div className="grid grid-rows-2 gap-2">
+					<Card>
+						<CardHeader>
+							<CardTitle>System Information</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<div className="space-y-2">
+								<div className="flex justify-between items-center">
+									<span className="text-sm font-medium">Host URL:</span>
+									<span className="text-sm text-muted-foreground">
+										<a href={hostUrl}>{hostUrl}</a>
+									</span>
+								</div>
+								<div className="flex justify-between items-center">
+									<span className="text-sm font-medium">Total Devices:</span>
+									<span className="text-sm text-muted-foreground">
+										{processedDevices.length}
+									</span>
+								</div>
+								<div className="flex justify-between items-center">
+									<span className="text-sm font-medium">Online Devices:</span>
+									<span className="text-sm text-muted-foreground">
+										{onlineDevices.length}
+									</span>
+								</div>
+								<div className="flex justify-between items-center">
+									<span className="text-sm font-medium">Offline Devices:</span>
+									<span className="text-sm text-muted-foreground">
+										{offlineDevices.length}
+									</span>
+								</div>
+							</div>
+						</CardContent>
+					</Card>
+					<Card className="mt-2 md:mt-4 gap-4">
+						<CardHeader>
+							<CardTitle>System Status</CardTitle>
+							<CardDescription>Overview of all connected devices</CardDescription>
+						</CardHeader>
+						<CardContent>
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+								<div>
+									<h3 className="text-sm font-medium mb-2">Online Devices</h3>
+									<div className="space-y-2 max-h-[100px] overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
+										{onlineDevices.length > 0 ? (
+											onlineDevices.map((device) => (
+												<div
+													key={device.id}
+													className="flex items-center justify-between p-2 bg-muted/50 rounded-md"
+												>
+													<div className="flex items-center gap-2">
+														<StatusIndicator status="online" size="md" />
+														<Link
+															href={`/device/${device.friendly_id}`}
+															className="text-sm"
+														>
+															{device.name}
+														</Link>
+													</div>
+													<span
+														className="text-xs text-muted-foreground"
+														suppressHydrationWarning
+													>
+														{formatDate(device.last_update_time)}
+													</span>
+												</div>
+											))
+										) : (
+											<div className="text-muted-foreground text-sm">
+												No devices are online
+											</div>
+										)}
+										</div>
+								</div>
+								<div>
+									<h3 className="text-sm font-medium mb-2">Offline Devices</h3>
+									<div className="space-y-2 max-h-[100px] overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
+										{offlineDevices.length > 0 ? (
+											offlineDevices.map((device) => (
+												<div
+													key={device.id}
+													className="flex items-center justify-between p-2 bg-muted/50 rounded-md"
+												>
+													<div className="flex items-center gap-2">
+														<StatusIndicator status="offline" size="md" />
+														<Link
+															href={`/device/${device.friendly_id}`}
+															className="text-sm"
+														>
+															{device.name}
+														</Link>
+													</div>
+													<span
+														className="text-xs text-muted-foreground"
+														suppressHydrationWarning
+													>
+														{formatDate(device.last_update_time)}
+													</span>
+												</div>
+											))
+										) : (
+											<div className="text-muted-foreground text-sm">
+												No devices are offline
+											</div>
+										)}
+									
+									</div>
+								</div>
+							</div>
+						</CardContent>
+					</Card>
+				</div>
 			</div>
 
-			<Card className="mt-2 md:mt-4 gap-4">
-				<CardHeader>
-					<CardTitle>System Status</CardTitle>
-					<CardDescription>Overview of all connected devices</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-						<div>
-							<h3 className="text-sm font-medium mb-2">Online Devices</h3>
-							<div className="space-y-2">
-								{onlineDevices.length > 0 ? (
-									onlineDevices.map((device) => (
-										<div
-											key={device.id}
-											className="flex items-center justify-between p-2 bg-muted/50 rounded-md"
-										>
-											<div className="flex items-center gap-2">
-												<StatusIndicator status="online" size="md" />
-												<Link
-													href={`/device/${device.friendly_id}`}
-													className="text-sm"
-												>
-													{device.name}
-												</Link>
-											</div>
-											<span
-												className="text-xs text-muted-foreground"
-												suppressHydrationWarning
-											>
-												{formatDate(device.last_update_time)}
-											</span>
-										</div>
-									))
-								) : (
-									<div className="text-muted-foreground text-sm">
-										No devices are online
-									</div>
-								)}
-							</div>
-						</div>
-						<div>
-							<h3 className="text-sm font-medium mb-2">Offline Devices</h3>
-							<div className="space-y-2">
-								{offlineDevices.length > 0 ? (
-									offlineDevices.map((device) => (
-										<div
-											key={device.id}
-											className="flex items-center justify-between p-2 bg-muted/50 rounded-md"
-										>
-											<div className="flex items-center gap-2">
-												<StatusIndicator status="offline" size="md" />
-												<Link
-													href={`/device/${device.friendly_id}`}
-													className="text-sm"
-												>
-													{device.name}
-												</Link>
-											</div>
-											<span
-												className="text-xs text-muted-foreground"
-												suppressHydrationWarning
-											>
-												{formatDate(device.last_update_time)}
-											</span>
-										</div>
-									))
-								) : (
-									<div className="text-muted-foreground text-sm">
-										No devices are offline
-									</div>
-								)}
-							</div>
-						</div>
-					</div>
-				</CardContent>
-			</Card>
 
 			<Card className="mt-2 md:mt-4 gap-4">
 				<CardHeader>
@@ -249,10 +252,10 @@ export const DashboardContent = ({
 										(prevLog &&
 											Math.abs(
 												new Date(log.created_at || "").getTime() -
-													new Date(prevLog.created_at || "").getTime(),
+												new Date(prevLog.created_at || "").getTime(),
 											) /
-												1000 >=
-												3);
+											1000 >=
+											3);
 									// Check if we should show level based on level difference with previous log or time difference
 									const shouldLevelBeShown =
 										index === 0 ||
@@ -260,10 +263,10 @@ export const DashboardContent = ({
 										(prevLog &&
 											Math.abs(
 												new Date(log.created_at || "").getTime() -
-													new Date(prevLog.created_at || "").getTime(),
+												new Date(prevLog.created_at || "").getTime(),
 											) /
-												1000 >=
-												3);
+											1000 >=
+											3);
 
 									return (
 										<TableRow key={log.id}>

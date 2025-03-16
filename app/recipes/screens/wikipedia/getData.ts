@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 
-interface WikipediaData {
+export interface WikipediaData {
 	title: string;
 	extract: string;
 	thumbnail?: {

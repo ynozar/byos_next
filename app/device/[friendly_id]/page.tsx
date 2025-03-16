@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, notFound } from "next/navigation";
 import Image from "next/image";
 import { RefreshCw, Save, X, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -112,8 +112,8 @@ export default function DevicePage() {
 					setEditedDevice(JSON.parse(JSON.stringify(enhancedDevice)));
 				} else {
 					// Handle device not found
-					console.error("Device not found");
-					router.push("/");
+					console.warn("Device not found");
+					notFound();
 				}
 			} catch (error) {
 				console.error("Error fetching device data:", error);

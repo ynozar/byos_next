@@ -138,6 +138,33 @@ const ditherPatterns: Record<
 	},
 };
 
+// List of Tailwind utilities that are known to cause issues with Satori
+const unsupportedSatoriUtilities = [
+	"antialiased",
+	"outline-none",
+	"inherit",
+	"appearance-none",
+	"select-none",
+	"align-baseline",
+	"list-none",
+	"truncate",
+	"subpixel-antialiased",
+	"font-blockkie",  // Handle these specially
+	"font-geneva9",   // Handle these specially
+	"text-inherit",
+	"font-inherit",
+	"no-underline"
+];
+
+// Satori-compatible reset styles for HTML elements
+// These override Satori's default styles
+const satoriResetStyles: Record<string, string> = {
+	common: "m-0 p-0 border-0 bg-transparent shadow-none",
+	heading: "m-0 p-0 border-0 bg-transparent shadow-none",
+	paragraph: "m-0 p-0 border-0 bg-transparent shadow-none",
+	div: "m-0 p-0 border-0 bg-transparent shadow-none",
+};
+
 /*
 	This function helps Satori figure out the font size of the text.
 */
@@ -189,41 +216,109 @@ const calculateFontSize = (
 	return parentFontSize;
 };
 
-// Calculate line height based on Tailwind text size classes
-const calculateLineHeight = (
+// Filter out Tailwind classes that are known to cause issues with Satori
+const filterOutUnsupportedClasses = (className?: string): string => {
+	if (!className) return "";
+
+	const classes = className.split(" ");
+	const filteredClasses = classes.filter(cls => {
+		// Keep the class if it's not in the unsupported list
+		return !unsupportedSatoriUtilities.includes(cls);
+	});
+
+	return filteredClasses.join(" ");
+};
+
+// Convert relative line height to absolute pixels
+const convertRelativeLineHeight = (
 	fontSize: number,
 	className?: string,
-): number | undefined => {
+): React.CSSProperties | undefined => {
 	if (!className) return undefined;
-
-	// Define Tailwind line height mappings based on text size classes
-	const tailwindLineHeights: Record<string, number> = {
-		"text-xs": 1 / 0.75,      // calc(1 / 0.75)
-		"text-sm": 1.25 / 0.875,  // calc(1.25 / 0.875)
-		"text-base": 1.5 / 1,     // calc(1.5 / 1)
-		"text-lg": 1.75 / 1.125,  // calc(1.75 / 1.125)
-		"text-xl": 1.75 / 1.25,   // calc(1.75 / 1.25)
-		"text-2xl": 2 / 1.5,      // calc(2 / 1.5)
-		"text-3xl": 2.25 / 1.875, // calc(2.25 / 1.875)
-		"text-4xl": 2.5 / 2.25,   // calc(2.5 / 2.25)
-		"text-5xl": 1,            // 1
-		"text-6xl": 1,            // 1
-		"text-7xl": 1,            // 1
-		"text-8xl": 1,            // 1
-		"text-9xl": 1,            // 1
-	};
-
-	// Split the className into individual classes
+	
+	// Extract all leading-* classes
 	const classes = className.split(" ");
-
-	// Check for Tailwind text size classes to determine line height
-	for (const cls of classes) {
-		if (tailwindLineHeights[cls]) {
-			return tailwindLineHeights[cls] * fontSize;
+	const lineHeightClasses = classes.filter(cls => cls.startsWith("leading-"));
+	
+	if (lineHeightClasses.length === 0) return undefined;
+	
+	// Check for any explicit pixel value class - if one exists, extract the value
+	const explicitLeadingClass = lineHeightClasses.find(cls => cls.startsWith("leading-["));
+	if (explicitLeadingClass) {
+		// Extract pixel value if possible
+		const match = explicitLeadingClass.match(/leading-\[(\d+)px\]/);
+		if (match?.[1]) {
+			return { lineHeight: `${match[1]}px` };
+		}
+		return undefined;
+	}
+	
+	// Map common Tailwind line height values to their numeric equivalents
+	const lineHeightMap: Record<string, number> = {
+		"leading-none": 1,
+		"leading-tight": 1.25,
+		"leading-snug": 1.375,
+		"leading-normal": 1.5,
+		"leading-relaxed": 1.625,
+		"leading-loose": 2,
+	};
+	
+	// Find the first matching class that has a mapping
+	for (const cls of lineHeightClasses) {
+		const lineHeight = lineHeightMap[cls];
+		if (lineHeight) {
+			const pixelValue = Math.round(fontSize * lineHeight);
+			return { lineHeight: `${pixelValue}px` };
 		}
 	}
+	
+	return undefined;
+};
 
-	// If no specific line height class is found, return undefined
+// Convert relative letter spacing to absolute pixels
+const convertRelativeTracking = (
+	fontSize: number,
+	className?: string,
+): React.CSSProperties | undefined => {
+	if (!className) return undefined;
+	
+	// Extract all tracking-* classes
+	const classes = className.split(" ");
+	const trackingClasses = classes.filter(cls => cls.startsWith("tracking-"));
+	
+	if (trackingClasses.length === 0) return undefined;
+	
+	// Check for any explicit pixel value class - if one exists, extract the value
+	const explicitTrackingClass = trackingClasses.find(cls => cls.startsWith("tracking-["));
+	if (explicitTrackingClass) {
+		// Extract pixel value if possible
+		const match = explicitTrackingClass.match(/tracking-\[(.+?)px\]/);
+		if (match?.[1]) {
+			return { letterSpacing: `${match[1]}px` };
+		}
+		return undefined;
+	}
+	
+	// Map common Tailwind tracking values to their em equivalents
+	const trackingMap: Record<string, number> = {
+		"tracking-tighter": -0.05,
+		"tracking-tight": -0.025,
+		"tracking-normal": 0,
+		"tracking-wide": 0.025,
+		"tracking-wider": 0.05,
+		"tracking-widest": 0.1,
+	};
+	
+	// Find the first matching class that has a mapping
+	for (const cls of trackingClasses) {
+		const tracking = trackingMap[cls];
+		if (tracking !== undefined) {
+			// Convert em to pixels based on font size
+			const pixelValue = tracking * fontSize;
+			return { letterSpacing: `${pixelValue}px` };
+		}
+	}
+	
 	return undefined;
 };
 
@@ -239,10 +334,21 @@ const extractFontFamily = (className?: string): string | undefined => {
 	if (fontClass) {
 		switch (fontClass) {
 			case "font-blockkie":
-				return "BlockKie";
+				return "BlockKie"; // Return the actual font name
 			case "font-geneva9":
-				return "Geneva9";
+				return "Geneva9"; // Return the actual font name
+			case "font-sans":
+				return "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif";
+			case "font-serif":
+				return "ui-serif, Georgia, Cambria, Times New Roman, Times, serif";
+			case "font-mono":
+				return "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace";
 			default:
+				// Handle any custom font-[...] classes
+				const customFontMatch = fontClass.match(/font-\[(.*?)\]/);
+				if (customFontMatch && customFontMatch[1]) {
+					return customFontMatch[1].replace(/['"]/g, ''); // Remove quotes if present
+				}
 				return undefined;
 		}
 	}
@@ -279,46 +385,87 @@ export const PreSatori: React.FC<PreSatoriProps> = ({ useDoubling = false, child
 			// Extract font family
 			const fontFamily = extractFontFamily(className);
 
-			// Handle style props
+			// Handle style props for Satori rendering
 			const newStyle: React.CSSProperties = {
 				...style,
 				fontSize: `${fontSize}px`,
 				...(fontFamily ? { fontFamily } : {}),
 				fontSmooth: "always",
 			};
+
+			// Special handling for display properties
+			// For Satori, DIVs MUST have display: flex
 			if (child.type === "div") {
-				newStyle.display = "flex";
+				// Check if user explicitly set display property in style
+				if (style?.display) {
+					// User-defined style takes priority, but ensure it's compatible with Satori
+					if (style.display === 'none') {
+						newStyle.display = 'none';
+					} else {
+						// For all other values, enforce flex for Satori
+						newStyle.display = 'flex';
+					}
+				} else {
+					// Default for divs
+					newStyle.display = 'flex';
+				}
 			}
 
-			// Process className for dither patterns
+			// Process className for dither patterns and regular styling
 			if (className) {
-				const remainingClassName: string[] = [];
+				const remainingClassNames: string[] = [];
 				// Extract dither classes
 				const classes = className.split(" ");
+				
 				// Check for dither classes and apply their styles
 				for (const cls of classes) {
 					if (cls.startsWith("dither-")) {
 						Object.assign(newStyle, ditherPatterns[cls], ditherPatterns.dither);
 					} else {
-						// Add non-dither classes to the front
-						remainingClassName.push(cls);
+						// Keep all other classes for browser rendering
+						remainingClassNames.push(cls);
 					}
 				}
 
-				if (
-					child.type === "h1" ||
-					child.type === "h2" ||
-					child.type === "h3" ||
-					child.type === "h4" ||
-					child.type === "h5" ||
-					child.type === "p" ||
-					child.type === "span" ||
-					child.type === "div"
-				) {
-					const baseClasses =
-						"antialiased m-0 p-0 border-0 outline-none bg-transparent shadow-none text-inherit font-inherit leading-none tracking-normal appearance-none select-none align-baseline list-none no-underline";
-					newProps.className = cn(baseClasses, remainingClassName.join(" ")); // for tailwind engine on normal website rendering
-					newProps.tw = cn(baseClasses, remainingClassName.join(" "));// Set the transformed classes for satori rendering
+				// For browser rendering, preserve ALL original classes
+				// This is SAFE because it goes into React, not Tailwind CSS compiler
+				newProps.className = cn(remainingClassNames.join(" "));
+				
+				// Handle line height and tracking
+				// Apply these as style properties for Satori
+				const lineHeightStyle = convertRelativeLineHeight(fontSize, className);
+				if (lineHeightStyle) {
+					Object.assign(newStyle, lineHeightStyle);
+				}
+
+				const trackingStyle = convertRelativeTracking(fontSize, className);
+				if (trackingStyle) {
+					Object.assign(newStyle, trackingStyle);
+				}
+				
+				// For Satori rendering via the tw prop
+				// 1. Filter out unsupported classes
+				// 2. Add reset styles
+				if (typeof child.type === "string") {
+					// Get appropriate reset styles
+					let resetStyles = "";
+					
+					// Apply element-specific resets
+					if (child.type.startsWith("h")) {
+						resetStyles = satoriResetStyles.heading;
+					} else if (child.type === "p") {
+						resetStyles = satoriResetStyles.paragraph;
+					} else if (child.type === "div") {
+						resetStyles = satoriResetStyles.div;
+					} else {
+						resetStyles = satoriResetStyles.common;
+					}
+					
+					// Filter classes for Satori rendering
+					const satoriClasses = filterOutUnsupportedClasses(remainingClassNames.join(" "));
+					
+					// Set the tw prop for Satori with static classes only
+					newProps.tw = cn(resetStyles, satoriClasses);
 				}
 			}
 

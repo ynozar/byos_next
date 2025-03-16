@@ -1,18 +1,5 @@
 import { PreSatori } from "@/utils/pre-satori";
-interface WikipediaArticleProps {
-	title?: string;
-	extract?: string;
-	url?: string;
-	thumbnail?: {
-		source?: string;
-		width?: number;
-		height?: number;
-	};
-	categories?: string[];
-	links?: string[];
-	lastModified?: string;
-	pageId?: number;
-}
+import { WikipediaData } from "./getData";
 
 export default function Wikipedia({
 	title = "Loading article...",
@@ -22,12 +9,14 @@ export default function Wikipedia({
 		width: 0,
 		height: 0,
 	},
-}: WikipediaArticleProps) {
+	content_urls,
+	description
+}: WikipediaData) {
 	// Ensure we have valid data to display
 	const hasValidThumbnail = thumbnail?.source
 		? thumbnail.source.startsWith("https://") &&
-			thumbnail.width &&
-			thumbnail.height
+		thumbnail.width &&
+		thumbnail.height
 		: false;
 
 	// Calculate a more appropriate extract length based on content length
@@ -53,13 +42,13 @@ export default function Wikipedia({
 
 	// Format the last modified date if available
 	const formattedDate = new Date().toLocaleDateString("en-GB", {
-				year: "numeric",
-				month: "short",
-				day: "numeric",
-				hour: "2-digit",
-				minute: "2-digit",
-				hour12: true,
-			});
+		year: "numeric",
+		month: "short",
+		day: "numeric",
+		hour: "2-digit",
+		minute: "2-digit",
+		hour12: true,
+	});
 
 	return (
 		<PreSatori useDoubling={true}>
@@ -92,8 +81,8 @@ export default function Wikipedia({
 													height:
 														thumbnail.height && thumbnail.width
 															? `${Math.round(
-																	thumbnail.height * (240 / thumbnail.width),
-																)}px`
+																thumbnail.height * (240 / thumbnail.width),
+															)}px`
 															: "auto",
 													maxWidth: "240px",
 													maxHeight: "280px",
@@ -104,7 +93,12 @@ export default function Wikipedia({
 									</div>
 								)}
 							</div>
-							<div className="flex-none p-4">
+							<div className="flex-none p-4 flex flex-col">
+								<div
+									className="text-base font-geneva9 flex justify-between w-full "
+								>
+									<span>{content_urls?.desktop?.page}</span> <span>{description}</span>
+								</div>
 								<div className="text-2xl text-black flex justify-between w-full p-2 rounded-xl dither-100" style={{ WebkitTextStroke: "4px white" }}>
 									<span>Wikipedia • Random Article</span>
 									{formattedDate && <span>Generated: {formattedDate}</span>}

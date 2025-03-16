@@ -289,7 +289,7 @@ export default function MainLayout({
 						</Button>
 						<Button variant="ghost" size="icon" asChild>
 							<Link
-								href="https://github.com/ghcpuman902/byos-nextjs"
+								href="https://github.com/usetrmnl/byos_next"
 								target="_blank"
 								rel="noopener noreferrer"
 							>
@@ -443,7 +443,7 @@ export default function MainLayout({
 					<div className="text-xs md:text-sm">
 						<span>Found an issue? </span>
 						<Link
-							href="https://github.com/ghcpuman902/byos-nextjs/issues"
+							href="https://github.com/usetrmnl/byos_next/issues"
 							target="_blank"
 							rel="noopener noreferrer"
 							className="underline hover:text-foreground"
